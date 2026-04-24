@@ -1,0 +1,68 @@
+{
+  "app": {
+    "name": "نظام إدارة المبيعات الميداني",
+    "tagline": "إدارة فريق المبيعات بكفاءة عالية"
+  },
+  "nav": {
+    "dashboard": "لوحة التحكم",
+    "visits": "الزيارات",
+    "orders": "الطلبات",
+    "customers": "العملاء",
+    "reports": "التقارير",
+    "targets": "الأهداف",
+    "team": "الفريق",
+    "settings": "الإعدادات"
+  },
+  "auth": {
+    "login": "تسجيل الدخول",
+    "logout": "تسجيل الخروج",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "forgotPassword": "نسيت كلمة المرور؟",
+    "loginButton": "دخول",
+    "loginError": "بيانات الدخول غير صحيحة"
+  },
+  "common": {
+    "loading": "جارٍ التحميل…",
+    "error": "حدث خطأ",
+    "retry": "إعادة المحاولة",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "view": "عرض",
+    "add": "إضافة",
+    "search": "بحث…",
+    "filter": "تصفية",
+    "export": "تصدير",
+    "noData": "لا توجد بيانات",
+    "confirm": "تأكيد",
+    "back": "رجوع",
+    "next": "التالي",
+    "previous": "السابق",
+    "total": "الإجمالي",
+    "status": "الحالة",
+    "date": "التاريخ",
+    "name": "الاسم",
+    "actions": "الإجراءات"
+  },
+  "status": {
+    "active": "نشط",
+    "inactive": "غير نشط",
+    "pending": "قيد الانتظار",
+    "completed": "مكتمل",
+    "cancelled": "ملغى",
+    "inProgress": "قيد التنفيذ",
+    "approved": "موافق عليه",
+    "rejected": "مرفوض",
+    "draft": "مسودة",
+    "delivered": "تم التسليم"
+  },
+  "kpi": {
+    "totalSales": "إجمالي المبيعات",
+    "totalVisits": "إجمالي الزيارات",
+    "newCustomers": "عملاء جدد",
+    "achievementRate": "نسبة الإنجاز",
+    "sar": "ر.س"
+  }
+}

@@ -1,0 +1,142 @@
+"use client";
+
+import { useActionState } from "react";
+import { createTarget } from "@/server/actions/targets";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { TARGET_METRIC_LABELS, TARGET_PERIOD_LABELS } from "@/types";
+import type { ActionResult, TargetMetric, TargetPeriod } from "@/types";
+
+interface RepOption {
+  id: string;
+  name: string | null;
+}
+
+interface TargetFormProps {
+  reps: RepOption[];
+}
+
+function buildPeriodOptions(period: TargetPeriod): { key: string; label: string }[] {
+  const now   = new Date();
+  const year  = now.getFullYear();
+  const month = now.getMonth() + 1; // 1-indexed
+
+  if (period === "monthly") {
+    const opts = [];
+    for (let i = 0; i < 6; i++) {
+      const m = month - i;
+      const y = m <= 0 ? year - 1 : year;
+      const mm = ((m - 1 + 12) % 12) + 1;
+      opts.push({ key: `${y}-${String(mm).padStart(2, "0")}`, label: `${y}-${String(mm).padStart(2, "0")}` });
+    }
+    return opts;
+  }
+  // quarterly: current and 3 previous quarters
+  const q    = Math.ceil(month / 3);
+  const opts = [];
+  for (let i = 0; i < 4; i++) {
+    const qi = q - i;
+    const y  = qi <= 0 ? year - 1 : year;
+    const qq = ((qi - 1 + 4) % 4) + 1;
+    opts.push({ key: `${y}-Q${qq}`, label: `${y}-Q${qq}` });
+  }
+  return opts;
+}
+
+const METRICS: TargetMetric[] = ["sales_amount", "collections_amount", "visits_count"];
+const PERIODS: TargetPeriod[] = ["monthly", "quarterly"];
+
+const initialState: ActionResult<{ id: string }> = { success: false };
+
+export function TargetForm({ reps }: TargetFormProps) {
+  const [state, action, pending] = useActionState(createTarget, initialState);
+
+  return (
+    <form action={action} className="space-y-5">
+      {state.error && (
+        <div className="rounded-card bg-danger-50 border border-danger-200 px-4 py-3 text-sm text-danger-700">
+          {state.error}
+        </div>
+      )}
+
+      <div className="space-y-2">
+        <Label htmlFor="userId">المندوب</Label>
+        <select
+          id="userId"
+          name="userId"
+          required
+          className="flex h-10 w-full rounded-card border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+        >
+          <option value="">اختر مندوبًا...</option>
+          {reps.map((r) => (
+            <option key={r.id} value={r.id}>{r.name ?? r.id}</option>
+          ))}
+        </select>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="metric">المقياس</Label>
+          <Select name="metric" required>
+            <SelectTrigger id="metric">
+              <SelectValue placeholder="اختر المقياس..." />
+            </SelectTrigger>
+            <SelectContent>
+              {METRICS.map((m) => (
+                <SelectItem key={m} value={m}>{TARGET_METRIC_LABELS[m]}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="period">نوع الفترة</Label>
+          <Select name="period" required defaultValue="monthly">
+            <SelectTrigger id="period">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {PERIODS.map((p) => (
+                <SelectItem key={p} value={p}>{TARGET_PERIOD_LABELS[p]}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Period key selector — shown dynamically; we use a simple text input */}
+      <div className="space-y-2">
+        <Label htmlFor="periodStart">الفترة</Label>
+        <Input
+          id="periodStart"
+          name="periodStart"
+          required
+          placeholder="مثال: 2026-04 أو 2026-Q2"
+          defaultValue={buildPeriodOptions("monthly")[0]?.key ?? ""}
+        />
+        <p className="text-xs text-text-secondary">
+          شهري: YYYY-MM (مثال: 2026-04) · ربعي: YYYY-Q1 إلى YYYY-Q4
+        </p>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="value">قيمة الهدف</Label>
+        <Input
+          id="value"
+          name="value"
+          type="number"
+          min="1"
+          step="any"
+          required
+          placeholder="0.00"
+        />
+      </div>
+
+      <Button type="submit" disabled={pending} className="w-full sm:w-auto">
+        {pending ? "جارٍ الحفظ..." : "حفظ الهدف"}
+      </Button>
+    </form>
+  );
+}

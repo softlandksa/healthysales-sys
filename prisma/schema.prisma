@@ -1,0 +1,580 @@
+// Prisma Schema — Field Sales Management System (Saudi Market)
+// Phase 6: Targets + Role-Aware Dashboards
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  admin
+  general_manager
+  sales_manager
+  team_manager
+  sales_rep
+}
+
+enum VisitType {
+  visit_only
+  sale
+  collection
+}
+
+enum SalesOrderStatus {
+  draft
+  confirmed
+  delivered
+  collected
+  cancelled
+}
+
+enum PaymentMethod {
+  cash
+  bank_transfer
+  check
+}
+
+enum TransactionType {
+  opening_balance
+  sale
+  collection
+  return_credit
+  adjustment
+}
+
+enum TaskStatus {
+  pending
+  in_progress
+  done
+  blocked
+  cancelled
+}
+
+enum CompetitionStatus {
+  upcoming
+  active
+  ended
+  cancelled
+}
+
+enum TargetPeriod {
+  monthly
+  quarterly
+}
+
+enum TargetMetric {
+  sales_amount
+  collections_amount
+  visits_count
+}
+
+// ─── Auth.js v5 required models ───────────────────────────────────────────────
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ─── Core Domain ──────────────────────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  phone         String?
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  role          UserRole  @default(sales_rep)
+  isActive      Boolean   @default(true)
+
+  managerId String?
+  manager   User?   @relation("UserHierarchy", fields: [managerId], references: [id])
+  reports   User[]  @relation("UserHierarchy")
+
+  teamId String?
+  team   Team?   @relation("TeamMembers", fields: [teamId], references: [id])
+
+  managedTeam Team? @relation("TeamManager")
+
+  assignedCustomers    Customer[]            @relation("CustomerRep")
+  customerTransactions CustomerTransaction[] @relation("TransactionCreator")
+  visits               Visit[]               @relation("VisitRep")
+  salesOrders          SalesOrder[]          @relation("SalesOrderRep")
+  collections          Collection[]          @relation("CollectionRep")
+
+  assignedTasks Task[]         @relation("TaskAssignee")
+  createdTasks  Task[]         @relation("TaskAssigner")
+  taskComments  TaskComment[]  @relation("TaskCommentAuthor")
+  notifications Notification[] @relation("NotificationRecipient")
+
+  competitionsCreated Competition[]       @relation("CompetitionCreator")
+  competitionResults  CompetitionResult[] @relation("CompetitionWinner")
+
+  targets        Target[] @relation("UserTargets")
+  createdTargets Target[] @relation("TargetCreator")
+
+  accounts  Account[]
+  sessions  Session[]
+  auditLogs AuditLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([role])
+  @@index([teamId])
+  @@index([managerId])
+  @@index([isActive])
+  @@map("users")
+}
+
+model Team {
+  id     String  @id @default(cuid())
+  nameAr String
+  nameEn String?
+
+  managerId String? @unique
+  manager   User?   @relation("TeamManager", fields: [managerId], references: [id])
+
+  members   User[]     @relation("TeamMembers")
+  customers Customer[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("teams")
+}
+
+model AuditLog {
+  id         String  @id @default(cuid())
+  action     String
+  entityType String
+  entityId   String?
+  metadata   Json?
+  ipAddress  String?
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model Setting {
+  key       String   @id
+  value     String   @default("0")
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
+}
+
+// ─── Products ─────────────────────────────────────────────────────────────────
+
+model Product {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  nameAr      String
+  nameEn      String?
+  description String?  @db.Text
+  unit        String   @default("قطعة")
+  price       Decimal  @db.Decimal(18, 2)
+  isActive    Boolean  @default(true)
+
+  orderItems   SalesOrderItem[]
+  competitions Competition[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+  @@map("products")
+}
+
+// ─── Customers ────────────────────────────────────────────────────────────────
+
+model Customer {
+  id      String  @id @default(cuid())
+  code    String  @unique
+  nameAr  String
+  nameEn  String?
+  phone   String?
+  phone2  String?
+  address String? @db.Text
+  notes   String? @db.Text
+
+  openingBalance Decimal  @db.Decimal(18, 2) @default(0)
+  balance        Decimal  @db.Decimal(18, 2) @default(0)
+  creditLimit    Decimal? @db.Decimal(18, 2)
+
+  isActive Boolean @default(true)
+
+  regionId     String?
+  region       Region?  @relation(fields: [regionId], references: [id])
+
+  assignedToId String?
+  assignedTo   User?   @relation("CustomerRep", fields: [assignedToId], references: [id])
+
+  teamId String?
+  team   Team?   @relation(fields: [teamId], references: [id])
+
+  transactions CustomerTransaction[]
+  visits       Visit[]
+  salesOrders  SalesOrder[]
+  collections  Collection[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+  @@index([assignedToId])
+  @@index([teamId])
+  @@index([regionId])
+  @@map("customers")
+}
+
+model CustomerTransaction {
+  id            String          @id @default(cuid())
+  type          TransactionType
+  amount        Decimal         @db.Decimal(18, 2)
+  balance       Decimal         @db.Decimal(18, 2)
+  description   String?
+  reference     String?
+  referenceType String?
+  referenceId   String?
+
+  transactionDate DateTime @default(now())
+
+  customerId  String
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  createdById String?
+  createdBy   User?   @relation("TransactionCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  @@index([customerId, transactionDate])
+  @@index([type])
+  @@index([referenceType, referenceId])
+  @@map("customer_transactions")
+}
+
+// ─── Region ───────────────────────────────────────────────────────────────────
+
+model Region {
+  id        String     @id @default(cuid())
+  nameAr    String
+  nameEn    String
+  customers Customer[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@map("regions")
+}
+
+// ─── Visits ───────────────────────────────────────────────────────────────────
+
+model Visit {
+  id        String    @id @default(cuid())
+  code      String    @unique
+  visitType VisitType @default(visit_only)
+  notes     String?   @db.Text
+  latitude  Float?
+  longitude Float?
+
+  repId      String
+  rep        User     @relation("VisitRep", fields: [repId], references: [id])
+
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+
+  salesOrder SalesOrder?
+  collection Collection?
+
+  visitedAt DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([repId])
+  @@index([customerId])
+  @@index([visitType])
+  @@index([visitedAt])
+  @@map("visits")
+}
+
+// ─── Sales Orders ─────────────────────────────────────────────────────────────
+
+model SalesOrder {
+  id           String           @id @default(cuid())
+  code         String           @unique
+  status       SalesOrderStatus @default(draft)
+  subtotal     Decimal          @db.Decimal(18, 2) @default(0)
+  discount     Decimal          @db.Decimal(18, 2) @default(0)
+  total        Decimal          @db.Decimal(18, 2) @default(0)
+  notes        String?          @db.Text
+  cancelReason String?          @db.Text
+
+  confirmedAt DateTime?
+  deliveredAt DateTime?
+  collectedAt DateTime?
+  cancelledAt DateTime?
+
+  repId      String
+  rep        User     @relation("SalesOrderRep", fields: [repId], references: [id])
+
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+
+  visitId String?  @unique
+  visit   Visit?   @relation(fields: [visitId], references: [id])
+
+  competitionId String?
+  competition   Competition? @relation(fields: [competitionId], references: [id], onDelete: SetNull)
+
+  items SalesOrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([repId])
+  @@index([customerId])
+  @@index([createdAt])
+  @@index([competitionId, status, collectedAt])
+  @@map("sales_orders")
+}
+
+model SalesOrderItem {
+  id         String  @id @default(cuid())
+  quantity   Int
+  unitPrice  Decimal @db.Decimal(18, 2)
+  lineTotal  Decimal @db.Decimal(18, 2)
+  expiryDate DateTime
+
+  orderId String
+  order   SalesOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("sales_order_items")
+}
+
+// ─── Collections ──────────────────────────────────────────────────────────────
+
+model Collection {
+  id           String        @id @default(cuid())
+  code         String        @unique
+  amount       Decimal       @db.Decimal(18, 2)
+  method       PaymentMethod @default(cash)
+  reference    String?
+  notes        String?       @db.Text
+  cancelReason String?       @db.Text
+  isCancelled  Boolean       @default(false)
+
+  collectedAt DateTime  @default(now())
+  cancelledAt DateTime?
+
+  repId      String
+  rep        User     @relation("CollectionRep", fields: [repId], references: [id])
+
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+
+  visitId String?  @unique
+  visit   Visit?   @relation(fields: [visitId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([repId])
+  @@index([customerId])
+  @@index([collectedAt])
+  @@map("collections")
+}
+
+// ─── Tasks ────────────────────────────────────────────────────────────────────
+
+model Task {
+  id          String     @id @default(cuid())
+  title       String     @db.VarChar(200)
+  description String?    @db.Text
+  status      TaskStatus @default(pending)
+  dueDate     DateTime
+  completedAt DateTime?
+
+  assignedById String
+  assignedBy   User   @relation("TaskAssigner", fields: [assignedById], references: [id])
+
+  assignedToId String
+  assignedTo   User   @relation("TaskAssignee", fields: [assignedToId], references: [id])
+
+  comments      TaskComment[]
+  notifications Notification[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([assignedToId, status])
+  @@index([assignedById])
+  @@index([status])
+  @@index([dueDate])
+  @@map("tasks")
+}
+
+model TaskComment {
+  id   String @id @default(cuid())
+  body String @db.Text
+
+  taskId String
+  task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation("TaskCommentAuthor", fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([taskId])
+  @@map("task_comments")
+}
+
+// ─── Competitions ─────────────────────────────────────────────────────────────
+
+model Competition {
+  id        String            @id @default(cuid())
+  name      String            @db.VarChar(120)
+  status    CompetitionStatus @default(upcoming)
+  prize     String            @db.VarChar(300)
+  notes     String?           @db.Text
+  startDate DateTime
+  endDate   DateTime
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  createdById String
+  createdBy   User   @relation("CompetitionCreator", fields: [createdById], references: [id])
+
+  salesOrders SalesOrder[]
+  results     CompetitionResult[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([productId])
+  @@index([startDate, endDate])
+  @@map("competitions")
+}
+
+model CompetitionResult {
+  id         String   @id @default(cuid())
+  rank       Int
+  units      Int
+  value      Decimal  @db.Decimal(18, 2)
+  recordedAt DateTime @default(now())
+
+  competitionId String
+  competition   Competition @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation("CompetitionWinner", fields: [userId], references: [id])
+
+  @@unique([competitionId, rank])
+  @@index([userId, rank])
+  @@map("competition_results")
+}
+
+// ─── Targets ──────────────────────────────────────────────────────────────────
+
+model Target {
+  id          String       @id @default(cuid())
+  period      TargetPeriod
+  metric      TargetMetric
+  periodStart DateTime
+  periodEnd   DateTime
+  value       Decimal      @db.Decimal(18, 2)
+
+  userId      String
+  user        User   @relation("UserTargets", fields: [userId], references: [id])
+
+  createdById String?
+  createdBy   User?  @relation("TargetCreator", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, metric, periodStart])
+  @@index([userId, periodStart])
+  @@index([metric])
+  @@map("targets")
+}
+
+// ─── Notifications ────────────────────────────────────────────────────────────
+
+model Notification {
+  id     String  @id @default(cuid())
+  type   String  @db.VarChar(64)
+  title  String  @db.VarChar(200)
+  body   String? @db.Text
+  link   String? @db.VarChar(500)
+  isRead Boolean @default(false)
+
+  userId String
+  user   User   @relation("NotificationRecipient", fields: [userId], references: [id], onDelete: Cascade)
+
+  taskId String?
+  task   Task?   @relation(fields: [taskId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, isRead])
+  @@index([userId, createdAt])
+  @@map("notifications")
+}

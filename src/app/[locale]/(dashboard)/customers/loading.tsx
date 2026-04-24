@@ -1,0 +1,2 @@
+import { ListSkeleton } from "@/components/skeletons";
+export default function Loading() { return <ListSkeleton rows={10} cols={6} />; }

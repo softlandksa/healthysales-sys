@@ -1,0 +1,137 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { setRequestLocale } from "next-intl/server";
+import { redirect } from "next/navigation";
+import { Plus } from "lucide-react";
+import { requireUser } from "@/lib/auth/current-user";
+import { defineAbilitiesFor } from "@/lib/rbac/abilities";
+import { getAccessibleUserIds } from "@/lib/rbac/access";
+import { prisma } from "@/lib/db/prisma";
+import { Breadcrumb } from "@/components/layout/Breadcrumb";
+import { Button } from "@/components/ui/button";
+import { CustomersTable } from "@/components/customers/CustomersTable";
+
+export const metadata: Metadata = { title: "العملاء" };
+
+interface Props {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{ q?: string; page?: string; status?: string }>;
+}
+
+export default async function CustomersPage({ params, searchParams }: Props) {
+  const { locale } = await params;
+  const { q = "", page = "1", status = "" } = await searchParams;
+  setRequestLocale(locale);
+
+  const currentUser = await requireUser();
+  const ability = defineAbilitiesFor(currentUser);
+  if (!ability.can("read", "Customer")) redirect("/ar/dashboard");
+
+  const canCreate = ability.can("create", "Customer");
+  const canEdit = ability.can("update", "Customer");
+
+  const pageSize = 20;
+  const pageNum = Math.max(1, parseInt(page, 10));
+
+  // Build scoped filter for non-admin roles
+  const scopedFilter =
+    currentUser.role === "admin" || currentUser.role === "general_manager"
+      ? {}
+      : currentUser.role === "sales_manager" || currentUser.role === "team_manager"
+      ? { teamId: { in: await (async () => {
+          const accessibleUserIds = await getAccessibleUserIds(currentUser);
+          const teams = await prisma.team.findMany({
+            where: { members: { some: { id: { in: accessibleUserIds } } } },
+            select: { id: true },
+          });
+          return teams.map((t) => t.id);
+        })() } }
+      : { assignedToId: currentUser.id };
+
+  const where = {
+    ...scopedFilter,
+    ...(q ? { OR: [
+      { nameAr: { contains: q, mode: "insensitive" as const } },
+      { nameEn: { contains: q, mode: "insensitive" as const } },
+      { code: { contains: q, mode: "insensitive" as const } },
+      { phone: { contains: q, mode: "insensitive" as const } },
+    ]} : {}),
+    ...(status === "active" ? { isActive: true } : status === "inactive" ? { isActive: false } : {}),
+  };
+
+  const [customers, total] = await Promise.all([
+    prisma.customer.findMany({
+      where,
+      orderBy: { nameAr: "asc" },
+      skip: (pageNum - 1) * pageSize,
+      take: pageSize,
+      select: {
+        id: true,
+        code: true,
+        nameAr: true,
+        nameEn: true,
+        phone: true,
+        balance: true,
+        creditLimit: true,
+        isActive: true,
+        createdAt: true,
+        assignedTo: { select: { name: true, email: true } },
+        team: { select: { nameAr: true } },
+        region: { select: { nameAr: true } },
+      },
+    }),
+    prisma.customer.count({ where }),
+  ]);
+
+  const rows = customers.map((c) => ({
+    id: c.id,
+    code: c.code,
+    nameAr: c.nameAr,
+    nameEn: c.nameEn,
+    phone: c.phone,
+    balance: c.balance.toFixed(2),
+    creditLimit: c.creditLimit ? c.creditLimit.toFixed(2) : null,
+    isActive: c.isActive,
+    createdAt: c.createdAt,
+    assignedToName: c.assignedTo?.name ?? c.assignedTo?.email ?? null,
+    teamNameAr: c.team?.nameAr ?? null,
+    regionNameAr: c.region?.nameAr ?? null,
+  }));
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <Breadcrumb
+            items={[
+              { label: "الرئيسية", href: "/ar/dashboard" },
+              { label: "العملاء" },
+            ]}
+          />
+          <h1 className="text-2xl font-bold text-text-primary mt-2">العملاء</h1>
+          <p className="text-sm text-text-secondary mt-0.5">
+            <span className="num">{total}</span> عميل
+          </p>
+        </div>
+        {canCreate && (
+          <Link href="/ar/customers/new">
+            <Button>
+              <Plus size={16} />
+              عميل جديد
+            </Button>
+          </Link>
+        )}
+      </div>
+
+      <CustomersTable
+        rows={rows}
+        total={total}
+        page={pageNum}
+        pageSize={pageSize}
+        q={q}
+        status={status}
+        canEdit={canEdit}
+      />
+    </div>
+  );
+}
