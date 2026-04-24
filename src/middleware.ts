@@ -35,6 +35,16 @@ const PROTECTED_SEGMENTS = [
 
 export default auth((req) => {
   const { pathname } = req.nextUrl;
+
+  // Intercept root, bare locale, and /login before next-intl can redirect to
+  // a non-existent /ar page and produce a 404.
+  if (pathname === "/" || pathname === "/ar" || pathname === "/login") {
+    const url = req.nextUrl.clone();
+    url.pathname = req.auth ? "/ar/dashboard" : "/ar/login";
+    url.search = "";
+    return NextResponse.redirect(url);
+  }
+
   const isProtected = PROTECTED_SEGMENTS.some((seg) =>
     pathname.match(new RegExp(`/(ar)/${seg}(/|$)`))
   );
