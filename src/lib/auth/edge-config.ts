@@ -12,6 +12,7 @@ function pick<T>(obj: unknown, key: string): T | null {
 
 // Edge-compatible config — NO bcrypt, NO Prisma adapter
 export const edgeAuthConfig = {
+  trustHost: true,
   session: {
     strategy: "jwt" as const,
     maxAge: 30 * 24 * 60 * 60,

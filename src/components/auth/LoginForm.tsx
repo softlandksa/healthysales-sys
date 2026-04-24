@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { motion } from "framer-motion";
 import { signIn } from "next-auth/react";
-import { AlertCircle, Eye, EyeOff } from "lucide-react";
+import { AlertCircle, Eye, EyeOff, BarChart2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -58,8 +58,8 @@ export default function LoginForm() {
     >
       {/* Brand */}
       <div className="text-center mb-8">
-        <div className="inline-flex items-center justify-center w-14 h-14 rounded-card bg-brand-600 text-white text-2xl font-bold mb-4 shadow-card">
-          م
+        <div className="inline-flex items-center justify-center w-14 h-14 rounded-card bg-brand-600 text-white mb-4 shadow-card">
+          <BarChart2 size={28} strokeWidth={1.75} />
         </div>
         <h1 className="text-2xl font-bold text-text-primary">نظام إدارة المبيعات</h1>
         <p className="mt-1.5 text-sm text-text-secondary">سجّل دخولك للمتابعة</p>
