@@ -17,7 +17,7 @@ function parseDate(s: string | undefined, fallback: Date): Date {
 
 export default async function TeamReportPage({ searchParams }: Props) {
   const sp   = await searchParams;
-  const user = await requireUser();
+  await requireUser();
   const now  = new Date();
   const { periodStart } = currentMonthPeriod(now);
 

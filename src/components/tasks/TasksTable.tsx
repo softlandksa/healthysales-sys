@@ -37,7 +37,6 @@ export function TasksTable({
   page,
   pageSize,
   status,
-  assignedToId,
   overdue,
   isManager,
 }: TasksTableProps) {

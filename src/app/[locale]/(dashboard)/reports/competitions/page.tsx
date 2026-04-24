@@ -6,7 +6,6 @@ import { DateRangeFilter } from "@/components/reports/DateRangeFilter";
 import { Badge } from "@/components/ui/badge";
 import { COMPETITION_STATUS_LABELS } from "@/types";
 import { formatNumber } from "@/lib/utils";
-import { currentMonthPeriod } from "@/lib/targets/periods";
 import type { CompetitionStatus } from "@/types";
 
 export const metadata: Metadata = { title: "تقرير المسابقات" };

@@ -21,7 +21,7 @@ const RANK_STYLES = [
 const RANK_LABELS = ["الأول", "الثاني", "الثالث"];
 const RANK_MEDALS = ["🥇", "🥈", "🥉"];
 
-export function Leaderboard({ entries, competitionId }: LeaderboardProps) {
+export function Leaderboard({ entries }: LeaderboardProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 

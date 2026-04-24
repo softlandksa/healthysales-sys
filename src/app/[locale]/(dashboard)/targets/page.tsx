@@ -5,7 +5,7 @@ import { requireUser } from "@/lib/auth/current-user";
 import { listTargets } from "@/server/actions/targets";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { TARGET_METRIC_LABELS, TARGET_PERIOD_LABELS, type TargetPeriod, type TargetMetric } from "@/types";
+import { TARGET_METRIC_LABELS, TARGET_PERIOD_LABELS, type TargetMetric } from "@/types";
 import { formatSAR, formatNumber } from "@/lib/utils";
 
 export const metadata: Metadata = {

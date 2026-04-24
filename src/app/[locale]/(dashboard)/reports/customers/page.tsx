@@ -3,7 +3,6 @@ import { requireUser } from "@/lib/auth/current-user";
 import { getCustomersReport } from "@/server/actions/reports";
 import { ReportShell } from "@/components/reports/ReportShell";
 import { DateRangeFilter } from "@/components/reports/DateRangeFilter";
-import { Badge } from "@/components/ui/badge";
 import { formatSAR, formatNumber } from "@/lib/utils";
 import { currentMonthPeriod } from "@/lib/targets/periods";
 import type { CustomerCategory } from "@/lib/reports/types";

@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useRef } from "react";
 import { toast } from "sonner";
-import { Loader2, Trash2, Send, ChevronDown } from "lucide-react";
+import { Loader2, Trash2, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";

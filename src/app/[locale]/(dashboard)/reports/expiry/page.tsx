@@ -5,7 +5,6 @@ import { ReportShell } from "@/components/reports/ReportShell";
 import { DateRangeFilter } from "@/components/reports/DateRangeFilter";
 import { formatNumber } from "@/lib/utils";
 import { cn } from "@/lib/utils";
-import { currentMonthPeriod } from "@/lib/targets/periods";
 import type { ExpiryStatus } from "@/lib/reports/types";
 
 export const metadata: Metadata = { title: "تقرير الصلاحية" };
