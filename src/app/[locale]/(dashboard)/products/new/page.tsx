@@ -3,6 +3,7 @@ import { setRequestLocale } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth/current-user";
 import { defineAbilitiesFor } from "@/lib/rbac/abilities";
+import { prisma } from "@/lib/db/prisma";
 import { Breadcrumb } from "@/components/layout/Breadcrumb";
 import { ProductForm } from "@/components/products/ProductForm";
 
@@ -18,6 +19,13 @@ export default async function NewProductPage({ params }: Props) {
   const ability = defineAbilitiesFor(currentUser);
   if (!ability.can("create", "Product")) redirect("/ar/products");
 
+  const unitRows = await prisma.productUnit.findMany({
+    where: { isActive: true },
+    orderBy: { nameAr: "asc" },
+    select: { nameAr: true },
+  });
+  const units = unitRows.map((u) => u.nameAr);
+
   return (
     <div className="space-y-6">
       <div>
@@ -30,7 +38,7 @@ export default async function NewProductPage({ params }: Props) {
         />
         <h1 className="text-2xl font-bold text-text-primary mt-2">منتج جديد</h1>
       </div>
-      <ProductForm mode="create" />
+      <ProductForm mode="create" units={units} />
     </div>
   );
 }

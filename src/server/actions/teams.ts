@@ -33,7 +33,7 @@ export async function createTeam(
     const parsed = createTeamSchema.safeParse({
       nameAr: formData.get("nameAr"),
       nameEn: formData.get("nameEn") || undefined,
-      managerId: formData.get("managerId") || undefined,
+      managerId: (formData.get("managerId") === "none" ? "" : formData.get("managerId") as string) || undefined,
     });
 
     if (!parsed.success) {
@@ -88,7 +88,7 @@ export async function updateTeam(
     const parsed = updateTeamSchema.safeParse({
       nameAr: formData.get("nameAr") || undefined,
       nameEn: formData.get("nameEn") || undefined,
-      managerId: formData.get("managerId") || undefined,
+      managerId: (formData.get("managerId") === "none" ? "" : formData.get("managerId") as string) || undefined,
     });
 
     if (!parsed.success) {

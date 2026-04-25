@@ -39,7 +39,8 @@
       "Bash(pnpm run *)",
       "Bash(echo \"EXIT CODE: $?\")",
       "Bash(pnpm tsc *)",
-      "Bash(xargs grep *)"
+      "Bash(xargs grep *)",
+      "Bash(pnpm db:push)"
     ]
   }
 }

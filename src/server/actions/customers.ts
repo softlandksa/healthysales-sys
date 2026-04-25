@@ -59,9 +59,9 @@ export async function createCustomer(
       notes: formData.get("notes") || undefined,
       openingBalance: formData.get("openingBalance") || "0",
       creditLimit: formData.get("creditLimit") || undefined,
-      regionId: formData.get("regionId") || undefined,
-      assignedToId: formData.get("assignedToId") || undefined,
-      teamId: formData.get("teamId") || undefined,
+      regionId: (formData.get("regionId") === "none" ? "" : formData.get("regionId") as string) || undefined,
+      assignedToId: (formData.get("assignedToId") === "none" ? "" : formData.get("assignedToId") as string) || undefined,
+      teamId: (formData.get("teamId") === "none" ? "" : formData.get("teamId") as string) || undefined,
       isActive: formData.get("isActive") !== "false",
     };
 
@@ -145,9 +145,9 @@ export async function updateCustomer(
       address: formData.get("address") || undefined,
       notes: formData.get("notes") || undefined,
       creditLimit: formData.get("creditLimit") || undefined,
-      regionId: formData.get("regionId") || undefined,
-      assignedToId: formData.get("assignedToId") || undefined,
-      teamId: formData.get("teamId") || undefined,
+      regionId: (formData.get("regionId") === "none" ? "" : formData.get("regionId") as string) || undefined,
+      assignedToId: (formData.get("assignedToId") === "none" ? "" : formData.get("assignedToId") as string) || undefined,
+      teamId: (formData.get("teamId") === "none" ? "" : formData.get("teamId") as string) || undefined,
       isActive: formData.get("isActive") !== "false",
     };
 

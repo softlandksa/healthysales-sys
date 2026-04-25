@@ -59,8 +59,8 @@ export async function createCollection(
 
     const data = parsed.data;
 
-    if ((data.method === "bank_transfer" || data.method === "check") && !data.reference) {
-      return { success: false, error: "رقم المرجع مطلوب للتحويل البنكي والشيك" };
+    if (data.method === "bank_transfer" && !data.reference) {
+      return { success: false, error: "رقم الحوالة مطلوب للتحويل البنكي" };
     }
 
     const customer = await prisma.customer.findUnique({

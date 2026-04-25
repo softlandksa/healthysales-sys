@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { createTarget } from "@/server/actions/targets";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -21,37 +21,54 @@ interface TargetFormProps {
 function buildPeriodOptions(period: TargetPeriod): { key: string; label: string }[] {
   const now   = new Date();
   const year  = now.getFullYear();
-  const month = now.getMonth() + 1; // 1-indexed
+  const month = now.getMonth() + 1;
 
   if (period === "monthly") {
     const opts = [];
     for (let i = 0; i < 6; i++) {
-      const m = month - i;
-      const y = m <= 0 ? year - 1 : year;
+      const m  = month - i;
+      const y  = m <= 0 ? year - 1 : year;
       const mm = ((m - 1 + 12) % 12) + 1;
-      opts.push({ key: `${y}-${String(mm).padStart(2, "0")}`, label: `${y}-${String(mm).padStart(2, "0")}` });
+      const key = `${y}-${String(mm).padStart(2, "0")}`;
+      opts.push({ key, label: key });
     }
     return opts;
   }
-  // quarterly: current and 3 previous quarters
-  const q    = Math.ceil(month / 3);
-  const opts = [];
-  for (let i = 0; i < 4; i++) {
-    const qi = q - i;
-    const y  = qi <= 0 ? year - 1 : year;
-    const qq = ((qi - 1 + 4) % 4) + 1;
-    opts.push({ key: `${y}-Q${qq}`, label: `${y}-Q${qq}` });
+
+  if (period === "quarterly") {
+    const q    = Math.ceil(month / 3);
+    const opts = [];
+    for (let i = 0; i < 4; i++) {
+      const qi = q - i;
+      const y  = qi <= 0 ? year - 1 : year;
+      const qq = ((qi - 1 + 4) % 4) + 1;
+      opts.push({ key: `${y}-Q${qq}`, label: `${y} — الربع ${qq}` });
+    }
+    return opts;
   }
-  return opts;
+
+  if (period === "yearly") {
+    return [
+      { key: String(year),     label: String(year) },
+      { key: String(year - 1), label: String(year - 1) },
+      { key: String(year - 2), label: String(year - 2) },
+    ];
+  }
+
+  return [];
 }
 
 const METRICS: TargetMetric[] = ["sales_amount", "collections_amount", "visits_count"];
-const PERIODS: TargetPeriod[] = ["monthly", "quarterly"];
+const PERIODS: TargetPeriod[] = ["monthly", "quarterly", "yearly", "custom"];
 
 const initialState: ActionResult<{ id: string }> = { success: false };
 
 export function TargetForm({ reps }: TargetFormProps) {
-  const [state, action, pending] = useActionState(createTarget, initialState);
+  const [state, action, pending]    = useActionState(createTarget, initialState);
+  const [period, setPeriod]         = useState<TargetPeriod>("monthly");
+
+  const periodOpts    = buildPeriodOptions(period);
+  const defaultPeriodKey = periodOpts[0]?.key ?? "";
 
   return (
     <form action={action} className="space-y-5">
@@ -93,10 +110,13 @@ export function TargetForm({ reps }: TargetFormProps) {
 
         <div className="space-y-2">
           <Label htmlFor="period">نوع الفترة</Label>
-          <Select name="period" required defaultValue="monthly">
-            <SelectTrigger id="period">
-              <SelectValue />
-            </SelectTrigger>
+          <Select
+            name="period"
+            required
+            defaultValue="monthly"
+            onValueChange={(v) => setPeriod(v as TargetPeriod)}
+          >
+            <SelectTrigger id="period"><SelectValue /></SelectTrigger>
             <SelectContent>
               {PERIODS.map((p) => (
                 <SelectItem key={p} value={p}>{TARGET_PERIOD_LABELS[p]}</SelectItem>
@@ -106,20 +126,33 @@ export function TargetForm({ reps }: TargetFormProps) {
         </div>
       </div>
 
-      {/* Period key selector — shown dynamically; we use a simple text input */}
-      <div className="space-y-2">
-        <Label htmlFor="periodStart">الفترة</Label>
-        <Input
-          id="periodStart"
-          name="periodStart"
-          required
-          placeholder="مثال: 2026-04 أو 2026-Q2"
-          defaultValue={buildPeriodOptions("monthly")[0]?.key ?? ""}
-        />
-        <p className="text-xs text-text-secondary">
-          شهري: YYYY-MM (مثال: 2026-04) · ربعي: YYYY-Q1 إلى YYYY-Q4
-        </p>
-      </div>
+      {period === "custom" ? (
+        <>
+          <input type="hidden" name="periodStart" value="custom" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="customStart">تاريخ البداية</Label>
+              <Input id="customStart" name="customStart" type="date" required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="customEnd">تاريخ النهاية</Label>
+              <Input id="customEnd" name="customEnd" type="date" required />
+            </div>
+          </div>
+        </>
+      ) : (
+        <div className="space-y-2">
+          <Label htmlFor="periodStart">الفترة</Label>
+          <Select name="periodStart" required defaultValue={defaultPeriodKey} key={period}>
+            <SelectTrigger id="periodStart"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {periodOpts.map((o) => (
+                <SelectItem key={o.key} value={o.key}>{o.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       <div className="space-y-2">
         <Label htmlFor="value">قيمة الهدف</Label>

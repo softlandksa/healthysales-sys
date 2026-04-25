@@ -66,6 +66,8 @@ enum CompetitionStatus {
 enum TargetPeriod {
   monthly
   quarterly
+  yearly
+  custom
 }
 
 enum TargetMetric {
@@ -233,6 +235,14 @@ model Product {
 
   @@index([isActive])
   @@map("products")
+}
+
+model ProductUnit {
+  id       String  @id @default(cuid())
+  nameAr   String  @unique
+  isActive Boolean @default(true)
+
+  @@map("product_units")
 }
 
 // ─── Customers ────────────────────────────────────────────────────────────────

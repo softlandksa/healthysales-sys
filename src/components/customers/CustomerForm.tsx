@@ -139,12 +139,12 @@ export function CustomerForm({
 
           <div className="space-y-1.5">
             <Label htmlFor="regionId">المنطقة</Label>
-            <Select name="regionId" defaultValue={defaultValues?.regionId ?? ""}>
+            <Select name="regionId" defaultValue={defaultValues?.regionId ?? "none"}>
               <SelectTrigger id="regionId">
                 <SelectValue placeholder="اختر المنطقة" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">بدون تحديد</SelectItem>
+                <SelectItem value="none">بدون تحديد</SelectItem>
                 {regions.map((r) => (
                   <SelectItem key={r.id} value={r.id}>{r.nameAr}</SelectItem>
                 ))}
@@ -160,12 +160,12 @@ export function CustomerForm({
 
           <div className="space-y-1.5">
             <Label htmlFor="teamId">الفريق</Label>
-            <Select name="teamId" defaultValue={defaultValues?.teamId ?? ""}>
+            <Select name="teamId" defaultValue={defaultValues?.teamId ?? "none"}>
               <SelectTrigger id="teamId">
                 <SelectValue placeholder="اختر الفريق" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">بدون فريق</SelectItem>
+                <SelectItem value="none">بدون فريق</SelectItem>
                 {teams.map((t) => (
                   <SelectItem key={t.id} value={t.id}>{t.nameAr}</SelectItem>
                 ))}
@@ -175,12 +175,12 @@ export function CustomerForm({
 
           <div className="space-y-1.5">
             <Label htmlFor="assignedToId">المندوب المسؤول</Label>
-            <Select name="assignedToId" defaultValue={defaultValues?.assignedToId ?? ""}>
+            <Select name="assignedToId" defaultValue={defaultValues?.assignedToId ?? "none"}>
               <SelectTrigger id="assignedToId">
                 <SelectValue placeholder="اختر المندوب" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">بدون تحديد</SelectItem>
+                <SelectItem value="none">بدون تحديد</SelectItem>
                 {reps.map((r) => (
                   <SelectItem key={r.id} value={r.id}>
                     {r.name ?? r.email}

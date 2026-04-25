@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { createProduct, updateProduct } from "@/server/actions/products";
 import type { ActionResult } from "@/types";
 
@@ -23,14 +24,18 @@ interface ProductFormProps {
     price?: string;
     isActive?: boolean;
   };
+  units: string[];
 }
 
 const INITIAL: ActionResult = { success: false };
 
-const UNITS = ["قطعة", "كرتون", "كيلو", "لتر", "متر", "علبة", "طرد", "دستة"];
+const FALLBACK_UNITS = ["قطعة", "كرتون", "كيلو", "لتر", "متر", "علبة", "طرد", "دستة"];
 
-export function ProductForm({ mode, productId, defaultValues }: ProductFormProps) {
+export function ProductForm({ mode, productId, defaultValues, units }: ProductFormProps) {
   const router = useRouter();
+
+  const availableUnits = units.length > 0 ? units : FALLBACK_UNITS;
+  const defaultUnit    = defaultValues?.unit ?? availableUnits[0] ?? "قطعة";
 
   const action =
     mode === "create"
@@ -73,16 +78,16 @@ export function ProductForm({ mode, productId, defaultValues }: ProductFormProps
 
           <div className="space-y-1.5">
             <Label htmlFor="unit" required>الوحدة</Label>
-            <Input
-              id="unit"
-              name="unit"
-              list="unit-options"
-              defaultValue={defaultValues?.unit ?? "قطعة"}
-              required
-            />
-            <datalist id="unit-options">
-              {UNITS.map((u) => <option key={u} value={u} />)}
-            </datalist>
+            <Select name="unit" defaultValue={defaultUnit} required>
+              <SelectTrigger id="unit">
+                <SelectValue placeholder="اختر الوحدة" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableUnits.map((u) => (
+                  <SelectItem key={u} value={u}>{u}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
@@ -109,7 +114,7 @@ export function ProductForm({ mode, productId, defaultValues }: ProductFormProps
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="price" required>السعر (ر.س)</Label>
+          <Label htmlFor="price">السعر (ر.س)</Label>
           <Input
             id="price"
             name="price"
@@ -119,8 +124,8 @@ export function ProductForm({ mode, productId, defaultValues }: ProductFormProps
             dir="ltr"
             defaultValue={defaultValues?.price ?? ""}
             placeholder="0.00"
-            required
           />
+          <p className="text-xs text-text-muted">اتركه فارغاً إذا لم يُحدَّد سعر بعد</p>
         </div>
 
         <div className="space-y-1.5">

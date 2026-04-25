@@ -22,7 +22,7 @@ import type {
 const TargetSchema = z.object({
   userId:      z.string().min(1),
   metric:      z.enum(["sales_amount", "collections_amount", "visits_count"]),
-  period:      z.enum(["monthly", "quarterly"]),
+  period:      z.enum(["monthly", "quarterly", "yearly", "custom"]),
   periodStart: z.string().min(1),
   value:       z.coerce.number().positive(),
 });
@@ -32,6 +32,7 @@ const TargetSchema = z.object({
 function parsePeriodStart(
   period: TargetPeriod,
   periodStartStr: string,
+  formData?: FormData,
 ): { periodStart: Date; periodEnd: Date } {
   if (period === "monthly") {
     const [year, month] = periodStartStr.split("-").map(Number);
@@ -39,14 +40,32 @@ function parsePeriodStart(
     const ref = new Date(`${year}-${String(month).padStart(2, "0")}-15T12:00:00+03:00`);
     return currentMonthPeriod(ref);
   }
-  const match = periodStartStr.match(/^(\d{4})-Q(\d)$/);
-  if (!match) throw new ValidationError("تنسيق الفترة ربع السنوية غير صحيح");
-  const [, yearStr, qStr] = match;
-  const year  = Number(yearStr);
-  const q     = Number(qStr);
-  const month = (q - 1) * 3 + 2;
-  const ref   = new Date(`${year}-${String(month).padStart(2, "0")}-15T12:00:00+03:00`);
-  return currentQuarterPeriod(ref);
+  if (period === "quarterly") {
+    const match = periodStartStr.match(/^(\d{4})-Q(\d)$/);
+    if (!match) throw new ValidationError("تنسيق الفترة ربع السنوية غير صحيح");
+    const [, yearStr, qStr] = match;
+    const year  = Number(yearStr);
+    const q     = Number(qStr);
+    const month = (q - 1) * 3 + 2;
+    const ref   = new Date(`${year}-${String(month).padStart(2, "0")}-15T12:00:00+03:00`);
+    return currentQuarterPeriod(ref);
+  }
+  if (period === "yearly") {
+    const year = Number(periodStartStr);
+    if (!year || year < 2000 || year > 2100) throw new ValidationError("السنة غير صحيحة");
+    const periodStart = new Date(Date.UTC(year, 0, 1) - 3 * 60 * 60 * 1000);
+    const periodEnd   = new Date(Date.UTC(year + 1, 0, 1) - 3 * 60 * 60 * 1000 - 1);
+    return { periodStart, periodEnd };
+  }
+  // custom
+  const customStart = formData?.get("customStart") as string | null;
+  const customEnd   = formData?.get("customEnd")   as string | null;
+  if (!customStart || !customEnd) throw new ValidationError("يرجى تحديد تواريخ الفترة المخصصة");
+  const periodStart = new Date(`${customStart}T00:00:00+03:00`);
+  const periodEnd   = new Date(`${customEnd}T23:59:59+03:00`);
+  if (isNaN(periodStart.getTime()) || isNaN(periodEnd.getTime())) throw new ValidationError("تواريخ غير صحيحة");
+  if (periodEnd <= periodStart) throw new ValidationError("تاريخ النهاية يجب أن يكون بعد تاريخ البداية");
+  return { periodStart, periodEnd };
 }
 
 // ─── Create target ────────────────────────────────────────────────────────────
@@ -71,7 +90,7 @@ export async function createTarget(
 
     let bounds: { periodStart: Date; periodEnd: Date };
     try {
-      bounds = parsePeriodStart(period as TargetPeriod, periodStartStr);
+      bounds = parsePeriodStart(period as TargetPeriod, periodStartStr, formData);
     } catch (e) {
       return { success: false, error: e instanceof ValidationError ? e.message : "فترة غير صحيحة" };
     }

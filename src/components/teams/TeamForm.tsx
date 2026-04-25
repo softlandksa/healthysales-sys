@@ -63,12 +63,12 @@ export function TeamForm({ mode, teamId, defaultValues, managers }: TeamFormProp
 
         <div className="space-y-1.5">
           <Label htmlFor="managerId">مدير الفريق</Label>
-          <Select name="managerId" defaultValue={defaultValues?.managerId ?? ""}>
+          <Select name="managerId" defaultValue={defaultValues?.managerId ?? "none"}>
             <SelectTrigger id="managerId">
               <SelectValue placeholder="اختر مدير الفريق (اختياري)" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">بدون مدير</SelectItem>
+              <SelectItem value="none">بدون مدير</SelectItem>
               {managers.map((m) => (
                 <SelectItem key={m.id} value={m.id}>{m.name ?? m.email}</SelectItem>
               ))}

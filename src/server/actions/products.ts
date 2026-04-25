@@ -19,7 +19,9 @@ const productSchema = z.object({
   price: z
     .string()
     .regex(/^\d+(\.\d{1,2})?$/, "السعر غير صالح")
-    .refine((v) => parseFloat(v) >= 0, "السعر لا يمكن أن يكون سالباً"),
+    .refine((v) => parseFloat(v) >= 0, "السعر لا يمكن أن يكون سالباً")
+    .optional()
+    .or(z.literal("")),
   isActive: z.boolean().optional().default(true),
 });
 
@@ -36,7 +38,7 @@ export async function createProduct(
       nameEn: formData.get("nameEn") || undefined,
       description: formData.get("description") || undefined,
       unit: formData.get("unit"),
-      price: formData.get("price"),
+      price: formData.get("price") || undefined,
       isActive: formData.get("isActive") !== "false",
     };
 
@@ -60,7 +62,7 @@ export async function createProduct(
         nameEn: data.nameEn || null,
         description: data.description || null,
         unit: data.unit,
-        price: data.price,
+        price: data.price || "0",
         isActive: data.isActive,
       },
     });
@@ -96,7 +98,7 @@ export async function updateProduct(
       nameEn: formData.get("nameEn") || undefined,
       description: formData.get("description") || undefined,
       unit: formData.get("unit"),
-      price: formData.get("price"),
+      price: formData.get("price") || undefined,
       isActive: formData.get("isActive") !== "false",
     };
 
@@ -122,7 +124,7 @@ export async function updateProduct(
         nameEn: data.nameEn || null,
         description: data.description || null,
         unit: data.unit,
-        price: data.price,
+        price: data.price || "0",
         isActive: data.isActive,
       },
     });

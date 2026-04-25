@@ -17,7 +17,7 @@ import type { ActionResult, PaymentMethod } from "@/types";
 const PAYMENT_METHODS: { value: PaymentMethod; label: string; hint?: string }[] = [
   { value: "cash",          label: "نقدي" },
   { value: "bank_transfer", label: "تحويل بنكي",  hint: "رقم الحوالة مطلوب" },
-  { value: "check",         label: "شيك",          hint: "رقم الشيك مطلوب" },
+  { value: "check",         label: "شيك",          hint: "رقم الشيك اختياري" },
 ];
 
 interface CollectionFormProps {
@@ -125,17 +125,17 @@ export function CollectionForm({ prefilledCustomerId, prefilledCustomerName, pre
         </div>
       </div>
 
-      {/* Reference — required for bank/check */}
+      {/* Reference — required for bank_transfer, optional for check */}
       {(method === "bank_transfer" || method === "check") && (
         <div className="space-y-2">
           <Label className="text-base font-semibold">
             {method === "bank_transfer" ? "رقم الحوالة" : "رقم الشيك"}
-            <span className="text-danger-500"> *</span>
+            {method === "bank_transfer" && <span className="text-danger-500"> *</span>}
           </Label>
           <Input
             name="reference"
-            placeholder={method === "bank_transfer" ? "أدخل رقم الحوالة..." : "أدخل رقم الشيك..."}
-            required
+            placeholder={method === "bank_transfer" ? "أدخل رقم الحوالة..." : "أدخل رقم الشيك (اختياري)..."}
+            required={method === "bank_transfer"}
           />
         </div>
       )}

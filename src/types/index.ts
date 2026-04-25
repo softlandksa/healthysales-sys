@@ -240,10 +240,10 @@ export type TaskStatus =
   | "cancelled";
 
 export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
-  pending:     "معلّقة",
+  pending:     "جديدة",
   in_progress: "قيد التنفيذ",
-  done:        "مكتملة",
-  blocked:     "محجوبة",
+  done:        "تم التنفيذ",
+  blocked:     "معلقة",
   cancelled:   "ملغاة",
 };
 
@@ -326,12 +326,14 @@ export interface LeaderboardEntry {
 
 // ─── Targets ──────────────────────────────────────────────────────────────────
 
-export type TargetPeriod = "monthly" | "quarterly";
+export type TargetPeriod = "monthly" | "quarterly" | "yearly" | "custom";
 export type TargetMetric = "sales_amount" | "collections_amount" | "visits_count";
 
 export const TARGET_PERIOD_LABELS: Record<TargetPeriod, string> = {
   monthly:   "شهري",
   quarterly: "ربع سنوي",
+  yearly:    "سنوي",
+  custom:    "مخصص",
 };
 
 export const TARGET_METRIC_LABELS: Record<TargetMetric, string> = {

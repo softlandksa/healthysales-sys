@@ -19,15 +19,24 @@ export default async function EditProductPage({ params }: Props) {
   const ability = defineAbilitiesFor(currentUser);
   if (!ability.can("update", "Product")) redirect("/ar/products");
 
-  const product = await prisma.product.findUnique({
-    where: { id },
-    select: {
-      id: true, code: true, nameAr: true, nameEn: true,
-      description: true, unit: true, price: true, isActive: true,
-    },
-  });
+  const [product, unitRows] = await Promise.all([
+    prisma.product.findUnique({
+      where: { id },
+      select: {
+        id: true, code: true, nameAr: true, nameEn: true,
+        description: true, unit: true, price: true, isActive: true,
+      },
+    }),
+    prisma.productUnit.findMany({
+      where: { isActive: true },
+      orderBy: { nameAr: "asc" },
+      select: { nameAr: true },
+    }),
+  ]);
 
   if (!product) notFound();
+
+  const units = unitRows.map((u) => u.nameAr);
 
   return (
     <div className="space-y-6">
@@ -45,6 +54,7 @@ export default async function EditProductPage({ params }: Props) {
       <ProductForm
         mode="edit"
         productId={id}
+        units={units}
         defaultValues={{
           code: product.code,
           nameAr: product.nameAr,

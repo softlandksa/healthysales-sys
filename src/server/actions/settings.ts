@@ -235,3 +235,80 @@ export async function changeOwnPassword(
   await prisma.user.update({ where: { id: user.id }, data: { password: hashed } });
   return { success: true };
 }
+
+// ─── Product Units ─────────────────────────────────────────────────────────────
+
+const unitSchema = z.object({
+  nameAr: z.string().min(1, "اسم الوحدة مطلوب").max(50).trim(),
+});
+
+export async function createProductUnit(
+  _prev: ActionResult,
+  formData: FormData
+): Promise<ActionResult<{ id: string }>> {
+  const user = await requireUser();
+  const ability = defineAbilitiesFor(user);
+  if (!ability.can("manage", "all")) {
+    return { success: false, error: "الصلاحية غير كافية" };
+  }
+
+  const parsed = unitSchema.safeParse({ nameAr: formData.get("nameAr") });
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.errors[0]?.message ?? "بيانات غير صالحة" };
+  }
+
+  try {
+    const unit = await prisma.productUnit.create({ data: { nameAr: parsed.data.nameAr } });
+    await audit({ action: "create", entityType: "ProductUnit", entityId: unit.id, user });
+    revalidatePath("/ar/settings");
+    revalidatePath("/ar/products/new");
+    return { success: true, data: { id: unit.id } };
+  } catch {
+    return { success: false, error: "اسم الوحدة موجود بالفعل" };
+  }
+}
+
+export async function updateProductUnit(
+  id: string,
+  _prev: ActionResult,
+  formData: FormData
+): Promise<ActionResult> {
+  const user = await requireUser();
+  const ability = defineAbilitiesFor(user);
+  if (!ability.can("manage", "all")) {
+    return { success: false, error: "الصلاحية غير كافية" };
+  }
+
+  const parsed = unitSchema.safeParse({ nameAr: formData.get("nameAr") });
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.errors[0]?.message ?? "بيانات غير صالحة" };
+  }
+
+  try {
+    await prisma.productUnit.update({ where: { id }, data: { nameAr: parsed.data.nameAr } });
+    await audit({ action: "update", entityType: "ProductUnit", entityId: id, user });
+    revalidatePath("/ar/settings");
+    revalidatePath("/ar/products/new");
+    return { success: true };
+  } catch {
+    return { success: false, error: "حدث خطأ أثناء الحفظ — قد يكون الاسم مستخدماً" };
+  }
+}
+
+export async function deleteProductUnit(id: string): Promise<ActionResult> {
+  const user = await requireUser();
+  const ability = defineAbilitiesFor(user);
+  if (!ability.can("manage", "all")) {
+    return { success: false, error: "الصلاحية غير كافية" };
+  }
+
+  try {
+    await prisma.productUnit.delete({ where: { id } });
+    await audit({ action: "delete", entityType: "ProductUnit", entityId: id, user });
+    revalidatePath("/ar/settings");
+    revalidatePath("/ar/products/new");
+    return { success: true };
+  } catch {
+    return { success: false, error: "لا يمكن حذف الوحدة" };
+  }
+}

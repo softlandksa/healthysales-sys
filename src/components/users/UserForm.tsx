@@ -121,10 +121,10 @@ export function UserForm({ mode, userId, defaultValues, teams, users, currentUse
 
           <div className="space-y-1.5">
             <Label htmlFor="teamId">الفريق</Label>
-            <Select name="teamId" defaultValue={defaultValues?.teamId ?? ""}>
+            <Select name="teamId" defaultValue={defaultValues?.teamId ?? "none"}>
               <SelectTrigger id="teamId"><SelectValue placeholder="اختر فريقاً (اختياري)" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="">بدون فريق</SelectItem>
+                <SelectItem value="none">بدون فريق</SelectItem>
                 {teams.map((t) => <SelectItem key={t.id} value={t.id}>{t.nameAr}</SelectItem>)}
               </SelectContent>
             </Select>
@@ -132,10 +132,10 @@ export function UserForm({ mode, userId, defaultValues, teams, users, currentUse
 
           <div className="space-y-1.5 md:col-span-2">
             <Label htmlFor="managerId">المشرف المباشر</Label>
-            <Select name="managerId" defaultValue={defaultValues?.managerId ?? ""}>
+            <Select name="managerId" defaultValue={defaultValues?.managerId ?? "none"}>
               <SelectTrigger id="managerId"><SelectValue placeholder="اختر المشرف (اختياري)" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="">بدون مشرف</SelectItem>
+                <SelectItem value="none">بدون مشرف</SelectItem>
                 {users.map((u) => (
                   <SelectItem key={u.id} value={u.id}>
                     {u.name ?? u.email} — {ROLE_LABELS[u.role]}

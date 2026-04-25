@@ -58,8 +58,8 @@ export async function createUser(
       phone: formData.get("phone") || undefined,
       password: formData.get("password"),
       role: formData.get("role"),
-      teamId: formData.get("teamId") || undefined,
-      managerId: formData.get("managerId") || undefined,
+      teamId: (formData.get("teamId") === "none" ? "" : formData.get("teamId") as string) || undefined,
+      managerId: (formData.get("managerId") === "none" ? "" : formData.get("managerId") as string) || undefined,
     };
 
     const parsed = createUserSchema.safeParse(raw);
@@ -129,8 +129,8 @@ export async function updateUser(
       name: formData.get("name") || undefined,
       phone: formData.get("phone") || undefined,
       role: formData.get("role") || undefined,
-      teamId: formData.get("teamId") || undefined,
-      managerId: formData.get("managerId") || undefined,
+      teamId: (formData.get("teamId") === "none" ? "" : formData.get("teamId") as string) || undefined,
+      managerId: (formData.get("managerId") === "none" ? "" : formData.get("managerId") as string) || undefined,
       isActive:
         formData.get("isActive") !== null
           ? formData.get("isActive") === "true"

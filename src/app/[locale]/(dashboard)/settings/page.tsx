@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getSystemSettings } from "@/server/actions/settings";
 import { GeneralSettingsForm } from "@/components/settings/GeneralSettingsForm";
 import { RegionsTab } from "@/components/settings/RegionsTab";
+import { UnitsTab } from "@/components/settings/UnitsTab";
 import { AccountTab } from "@/components/settings/AccountTab";
 
 export const metadata: Metadata = { title: "الإعدادات" };
@@ -22,12 +23,13 @@ export default async function SettingsPage({ params }: Props) {
   const ability     = defineAbilitiesFor(currentUser);
   const isAdmin     = ability.can("manage", "all");
 
-  const [settings, regions, dbUser] = await Promise.all([
+  const [settings, regions, units, dbUser] = await Promise.all([
     getSystemSettings(),
     prisma.region.findMany({
       orderBy: { nameAr: "asc" },
       include: { _count: { select: { customers: true } } },
     }),
+    prisma.productUnit.findMany({ orderBy: { nameAr: "asc" } }),
     prisma.user.findUnique({
       where: { id: currentUser.id },
       select: { name: true, email: true, phone: true },
@@ -46,6 +48,7 @@ export default async function SettingsPage({ params }: Props) {
         <TabsList className="mb-6">
           <TabsTrigger value="general">إعدادات النظام</TabsTrigger>
           <TabsTrigger value="regions">المناطق</TabsTrigger>
+          <TabsTrigger value="units">وحدات القياس</TabsTrigger>
           <TabsTrigger value="account">الحساب الشخصي</TabsTrigger>
         </TabsList>
 
@@ -55,6 +58,10 @@ export default async function SettingsPage({ params }: Props) {
 
         <TabsContent value="regions">
           <RegionsTab regions={regions} isAdmin={isAdmin} />
+        </TabsContent>
+
+        <TabsContent value="units">
+          <UnitsTab units={units} isAdmin={isAdmin} />
         </TabsContent>
 
         <TabsContent value="account">
