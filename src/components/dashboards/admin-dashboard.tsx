@@ -1,4 +1,5 @@
-import { ShoppingCart, MapPin, Wallet, Users, Activity } from "lucide-react";
+import { ShoppingCart, MapPin, Wallet, Users, Activity, AlertTriangle } from "lucide-react";
+import NextLink from "next/link";
 import { prisma } from "@/lib/db/prisma";
 import { StatCard } from "@/components/kpi/stat-card";
 import { currentMonthPeriod } from "@/lib/targets/periods";
@@ -50,10 +51,23 @@ export async function AdminDashboard() {
   const salesDelta = prevSales > 0 ? ((sales - prevSales) / prevSales) * 100 : 0;
 
   // System health counts
-  const [openTasks, activeCompetitions, pendingOrders] = await Promise.all([
+  const now90   = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
+  const [openTasks, activeCompetitions, pendingOrders, nearExpiryCount, expiredCount] = await Promise.all([
     prisma.task.count({ where: { status: { in: ["pending", "in_progress", "blocked"] } } }),
     prisma.competition.count({ where: { status: "active" } }),
     prisma.salesOrder.count({ where: { status: { in: ["confirmed", "delivered"] } } }),
+    prisma.salesOrderItem.count({
+      where: {
+        expiryDate: { gt: now, lte: now90 },
+        order: { status: { in: ["delivered", "collected"] } },
+      },
+    }),
+    prisma.salesOrderItem.count({
+      where: {
+        expiryDate: { lt: now },
+        order: { status: { in: ["delivered", "collected"] } },
+      },
+    }),
   ]);
 
   return (
@@ -94,7 +108,7 @@ export async function AdminDashboard() {
       {/* System health */}
       <div className="card p-5 space-y-4">
         <h3 className="text-sm font-semibold text-text-primary">صحة النظام</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
           <div className="flex flex-col gap-1">
             <p className="text-2xl font-bold num text-text-primary">{formatNumber(openTasks)}</p>
             <p className="text-sm text-text-secondary">مهام مفتوحة</p>
@@ -107,6 +121,24 @@ export async function AdminDashboard() {
             <p className="text-2xl font-bold num text-text-primary">{formatNumber(pendingOrders)}</p>
             <p className="text-sm text-text-secondary">طلبات معلقة</p>
           </div>
+          <NextLink href="/ar/reports/expiry?status=warning" className="flex flex-col gap-1 group">
+            <div className="flex items-center gap-1.5">
+              <p className={`text-2xl font-bold num ${nearExpiryCount > 0 ? "text-warning-600" : "text-text-primary"}`}>
+                {formatNumber(nearExpiryCount)}
+              </p>
+              {nearExpiryCount > 0 && <AlertTriangle size={16} className="text-warning-500" />}
+            </div>
+            <p className="text-sm text-text-secondary group-hover:text-brand-600 transition-colors">قرب الانتهاء</p>
+          </NextLink>
+          <NextLink href="/ar/reports/expiry?status=expired" className="flex flex-col gap-1 group">
+            <div className="flex items-center gap-1.5">
+              <p className={`text-2xl font-bold num ${expiredCount > 0 ? "text-danger-600" : "text-text-primary"}`}>
+                {formatNumber(expiredCount)}
+              </p>
+              {expiredCount > 0 && <AlertTriangle size={16} className="text-danger-500" />}
+            </div>
+            <p className="text-sm text-text-secondary group-hover:text-brand-600 transition-colors">منتهي الصلاحية</p>
+          </NextLink>
         </div>
       </div>
 

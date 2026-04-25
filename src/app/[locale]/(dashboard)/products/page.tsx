@@ -9,6 +9,7 @@ import { prisma } from "@/lib/db/prisma";
 import { Breadcrumb } from "@/components/layout/Breadcrumb";
 import { Button } from "@/components/ui/button";
 import { ProductsTable } from "@/components/products/ProductsTable";
+import { ProductExcelActions } from "@/components/products/ProductExcelActions";
 
 export const metadata: Metadata = { title: "المنتجات" };
 
@@ -67,7 +68,7 @@ export default async function ProductsPage({ params, searchParams }: Props) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <Breadcrumb
             items={[
@@ -80,14 +81,17 @@ export default async function ProductsPage({ params, searchParams }: Props) {
             <span className="num">{total}</span> منتج
           </p>
         </div>
-        {canCreate && (
-          <Link href="/ar/products/new">
-            <Button>
-              <Plus size={16} />
-              منتج جديد
-            </Button>
-          </Link>
-        )}
+        <div className="flex items-center gap-3 flex-wrap">
+          <ProductExcelActions canImport={canCreate} />
+          {canCreate && (
+            <Link href="/ar/products/new">
+              <Button>
+                <Plus size={16} />
+                منتج جديد
+              </Button>
+            </Link>
+          )}
+        </div>
       </div>
 
       <ProductsTable
