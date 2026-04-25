@@ -52,10 +52,14 @@ export async function AdminDashboard() {
 
   // System health counts
   const now90   = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
-  const [openTasks, activeCompetitions, pendingOrders, nearExpiryCount, expiredCount] = await Promise.all([
+  const [openTasks, activeCompetitions, pendingOrders] = await Promise.all([
     prisma.task.count({ where: { status: { in: ["pending", "in_progress", "blocked"] } } }),
     prisma.competition.count({ where: { status: "active" } }),
     prisma.salesOrder.count({ where: { status: { in: ["confirmed", "delivered"] } } }),
+  ]);
+
+  // Expiry counts are isolated so a schema mismatch can't crash the dashboard
+  const [nearExpiryResult, expiredResult] = await Promise.allSettled([
     prisma.salesOrderItem.count({
       where: {
         expiryDate: { gt: now, lte: now90 },
@@ -69,6 +73,8 @@ export async function AdminDashboard() {
       },
     }),
   ]);
+  const nearExpiryCount = nearExpiryResult.status === "fulfilled" ? nearExpiryResult.value : 0;
+  const expiredCount    = expiredResult.status    === "fulfilled" ? expiredResult.value    : 0;
 
   return (
     <div className="space-y-6">

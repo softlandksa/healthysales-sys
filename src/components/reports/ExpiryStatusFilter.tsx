@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import type { ExpiryStatus } from "@/lib/reports/types";
 
@@ -14,7 +15,7 @@ interface ExpiryStatusFilterProps {
   currentStatus?: ExpiryStatus;
 }
 
-export function ExpiryStatusFilter({ currentStatus }: ExpiryStatusFilterProps) {
+function ExpiryStatusFilterInner({ currentStatus }: ExpiryStatusFilterProps) {
   const router   = useRouter();
   const pathname = usePathname();
   const sp       = useSearchParams();
@@ -40,5 +41,13 @@ export function ExpiryStatusFilter({ currentStatus }: ExpiryStatusFilterProps) {
         ))}
       </select>
     </div>
+  );
+}
+
+export function ExpiryStatusFilter({ currentStatus }: ExpiryStatusFilterProps) {
+  return (
+    <Suspense fallback={<div className="h-8 w-28 bg-surface-1 animate-pulse rounded-input" />}>
+      <ExpiryStatusFilterInner {...(currentStatus ? { currentStatus } : {})} />
+    </Suspense>
   );
 }

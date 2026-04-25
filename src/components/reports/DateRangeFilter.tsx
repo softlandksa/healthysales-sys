@@ -1,19 +1,19 @@
 "use client";
 
+import { Suspense } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useCallback } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
+import type { ReactNode } from "react";
 
 interface DateRangeFilterProps {
   extraFilters?: ReactNode;
 }
 
-import type { ReactNode } from "react";
-
-export function DateRangeFilter({ extraFilters }: DateRangeFilterProps) {
+function DateRangeFilterInner({ extraFilters }: DateRangeFilterProps) {
   const router     = useRouter();
   const pathname   = usePathname();
   const sp         = useSearchParams();
@@ -55,5 +55,15 @@ export function DateRangeFilter({ extraFilters }: DateRangeFilterProps) {
         تطبيق
       </Button>
     </form>
+  );
+}
+
+export function DateRangeFilter({ extraFilters }: DateRangeFilterProps) {
+  return (
+    <Suspense fallback={
+      <div className="card p-4 h-16 bg-surface-1 animate-pulse rounded-card print:hidden" />
+    }>
+      <DateRangeFilterInner extraFilters={extraFilters} />
+    </Suspense>
   );
 }
