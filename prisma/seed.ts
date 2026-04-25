@@ -33,7 +33,7 @@ async function main() {
   await prisma.user.create({
     data: {
       name: "كامل",
-      email: "kamel@prameg.one",
+      email: "kamel@prameg.net",
       password: await hash("Kamel$123"),
       role: "admin",
       isActive: true,
@@ -169,7 +169,7 @@ async function main() {
   console.log("│ الدور                        │ البريد الإلكتروني         │ كلمة المرور   │ المشرف                     │");
   console.log("├─────────────────────────────┼──────────────────────────┼──────────────┼─────────────────────────────┤");
   const rows = [
-    ["مدير الإنتاج",        "kamel@prameg.one",  "Kamel$123","—"],
+    ["مدير الإنتاج",        "kamel@prameg.net",  "Kamel$123","—"],
     ["مدير النظام",         "admin@example.com", "admin123", "—"],
     ["المدير العام",        "gm@example.com",    "gm123",    "admin"],
     ["مدير مبيعات 1",       "sm1@example.com",   "sm123",    "gm"],

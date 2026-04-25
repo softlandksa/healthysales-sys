@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 
 export const dynamic = "force-dynamic";
 
-const ADMIN_EMAIL    = "kamel@prameg.one";
+const ADMIN_EMAIL    = "kamel@prameg.net";
 const ADMIN_NAME     = "كامل";
 const ADMIN_PASSWORD = "Kamel$123";
 
@@ -14,12 +14,12 @@ const ADMIN_PASSWORD = "Kamel$123";
  * Idempotent — safe to call on every deployment.
  *
  * What it does:
- *  1. Upserts kamel@prameg.one as the sole active admin (always re-hashes password).
+ *  1. Upserts kamel@prameg.net as the sole active admin (always re-hashes password).
  *  2. Deactivates every other user (isActive = false) so only the admin can log in.
  *     Note: users are deactivated, not deleted, to preserve linked business data
  *     (visits, sales orders, collections, tasks, etc.).
  *
- * Returns: { status: "admin_ready", email: "kamel@prameg.one" }
+ * Returns: { status: "admin_ready", email: "kamel@prameg.net" }
  */
 export async function GET() {
   const checks: Record<string, string> = {};
