@@ -1,9 +1,9 @@
 import { prisma } from "@/lib/db/prisma";
 import bcrypt from "bcryptjs";
 
-const ADMIN_EMAIL = "kamel@prameg.net";
+const ADMIN_EMAIL    = "kamel@prameg.one";
 const ADMIN_PASSWORD = "Kamel$123";
-const ADMIN_NAME = "كامل";
+const ADMIN_NAME     = "كامل";
 
 export async function ensureAdminUser(): Promise<void> {
   try {
