@@ -17,10 +17,12 @@ export default async function DashboardLayout({ children, params }: DashboardLay
   setRequestLocale(locale);
 
   const user = await requireUser();
-  const [unreadCount, notifications] = await Promise.all([
+  const [unreadResult, notifResult] = await Promise.allSettled([
     getUnreadCount(),
     getMyNotifications(5),
   ]);
+  const unreadCount   = unreadResult.status  === "fulfilled" ? unreadResult.value  : 0;
+  const notifications = notifResult.status   === "fulfilled" ? notifResult.value   : [];
 
   return (
     <div className="flex h-dvh overflow-hidden bg-surface-1">

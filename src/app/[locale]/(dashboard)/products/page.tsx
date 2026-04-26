@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { setRequestLocale } from "next-intl/server";
 import { redirect } from "next/navigation";
-import { Plus } from "lucide-react";
+import { Plus, AlertTriangle } from "lucide-react";
 import { requireUser } from "@/lib/auth/current-user";
 import { defineAbilitiesFor } from "@/lib/rbac/abilities";
 import { prisma } from "@/lib/db/prisma";
@@ -30,41 +30,52 @@ export default async function ProductsPage({ params, searchParams }: Props) {
   const canCreate = ability.can("create", "Product");
 
   const pageSize = 20;
-  const pageNum = Math.max(1, parseInt(page, 10));
+  const pageNum  = Math.max(1, parseInt(page, 10));
 
-  const where = {
-    ...(q ? { OR: [
-      { nameAr: { contains: q, mode: "insensitive" as const } },
-      { nameEn: { contains: q, mode: "insensitive" as const } },
-      { code: { contains: q, mode: "insensitive" as const } },
-    ]} : {}),
-    ...(status === "active" ? { isActive: true } : status === "inactive" ? { isActive: false } : {}),
-  };
+  let rows: {
+    id: string; code: string; nameAr: string; nameEn: string | null;
+    unit: string; price: string; isActive: boolean; createdAt: Date;
+  }[] = [];
+  let total = 0;
+  let pageError: string | null = null;
 
-  const [products, total] = await Promise.all([
-    prisma.product.findMany({
-      where,
-      orderBy: { nameAr: "asc" },
-      skip: (pageNum - 1) * pageSize,
-      take: pageSize,
-      select: {
-        id: true,
-        code: true,
-        nameAr: true,
-        nameEn: true,
-        unit: true,
-        price: true,
-        isActive: true,
-        createdAt: true,
-      },
-    }),
-    prisma.product.count({ where }),
-  ]);
+  try {
+    const where = {
+      ...(q
+        ? {
+            OR: [
+              { nameAr: { contains: q, mode: "insensitive" as const } },
+              { nameEn: { contains: q, mode: "insensitive" as const } },
+              { code:   { contains: q, mode: "insensitive" as const } },
+            ],
+          }
+        : {}),
+      ...(status === "active"
+        ? { isActive: true }
+        : status === "inactive"
+        ? { isActive: false }
+        : {}),
+    };
 
-  const rows = products.map((p) => ({
-    ...p,
-    price: p.price.toFixed(2),
-  }));
+    const [products, count] = await Promise.all([
+      prisma.product.findMany({
+        where,
+        orderBy: { nameAr: "asc" },
+        skip:    (pageNum - 1) * pageSize,
+        take:    pageSize,
+        select: {
+          id: true, code: true, nameAr: true, nameEn: true,
+          unit: true, price: true, isActive: true, createdAt: true,
+        },
+      }),
+      prisma.product.count({ where }),
+    ]);
+
+    total = count;
+    rows  = products.map((p) => ({ ...p, price: p.price.toFixed(2) }));
+  } catch {
+    pageError = "تعذر تحميل قائمة المنتجات. يرجى المحاولة مجدداً.";
+  }
 
   return (
     <div className="space-y-6">
@@ -77,9 +88,11 @@ export default async function ProductsPage({ params, searchParams }: Props) {
             ]}
           />
           <h1 className="text-2xl font-bold text-text-primary mt-2">المنتجات</h1>
-          <p className="text-sm text-text-secondary mt-0.5">
-            <span className="num">{total}</span> منتج
-          </p>
+          {!pageError && (
+            <p className="text-sm text-text-secondary mt-0.5">
+              <span className="num">{total}</span> منتج
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-3 flex-wrap">
           <ProductExcelActions canImport={canCreate} />
@@ -94,16 +107,25 @@ export default async function ProductsPage({ params, searchParams }: Props) {
         </div>
       </div>
 
-      <ProductsTable
-        rows={rows}
-        total={total}
-        page={pageNum}
-        pageSize={pageSize}
-        q={q}
-        status={status}
-        canEdit={ability.can("update", "Product")}
-        canDelete={ability.can("delete", "Product")}
-      />
+      {pageError ? (
+        <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
+          <div className="p-3 rounded-full bg-danger-50">
+            <AlertTriangle size={24} className="text-danger-600" />
+          </div>
+          <p className="text-sm text-text-secondary max-w-sm">{pageError}</p>
+        </div>
+      ) : (
+        <ProductsTable
+          rows={rows}
+          total={total}
+          page={pageNum}
+          pageSize={pageSize}
+          q={q}
+          status={status}
+          canEdit={ability.can("update", "Product")}
+          canDelete={ability.can("delete", "Product")}
+        />
+      )}
     </div>
   );
 }
