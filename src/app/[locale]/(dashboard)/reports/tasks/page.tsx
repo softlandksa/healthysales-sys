@@ -58,7 +58,7 @@ export default async function TasksReportPage({ searchParams }: Props) {
     ...(user.role === "sales_rep"  ? { assignedToId: user.id }    : {}),
   };
 
-  const data = await getTasksReport({ from, to, ...(statusFilter ? { status: statusFilter } : {}) }).catch(() => null);
+  const data = await getTasksReport({ from, to, ...(statusFilter ? { status: statusFilter } : {}) }).catch((e) => { console.error("[tasks-report] fetch failed:", e); return null; });
 
   const statusKeys: TaskStatus[] = ["pending", "in_progress", "done", "blocked", "cancelled"];
 

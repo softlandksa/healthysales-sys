@@ -54,7 +54,7 @@ export default async function ExpiryReportPage({ searchParams }: Props) {
     to,
     ...(statusFilter ? { status: statusFilter } : {}),
     ...(repFilter    ? { repId: repFilter }     : {}),
-  }).catch(() => null);
+  }).catch((e) => { console.error("[expiry-report] fetch failed:", e); return null; });
 
   const exportParams = {
     from: from.toISOString().slice(0, 10),

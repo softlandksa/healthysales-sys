@@ -61,7 +61,7 @@ export default async function SalesReportPage({ searchParams }: Props) {
     ...(user.role === "sales_rep" ? { repId: user.id }       : {}),
   };
 
-  const data = await getSalesReport({ from, to, ...(statusFilter ? { status: statusFilter } : {}) }).catch(() => null);
+  const data = await getSalesReport({ from, to, ...(statusFilter ? { status: statusFilter } : {}) }).catch((e) => { console.error("[sales-report] fetch failed:", e); return null; });
 
   const statusKeys: SalesOrderStatus[] = ["draft", "confirmed", "delivered", "collected", "cancelled"];
   const statusCount: Record<string, number> = {

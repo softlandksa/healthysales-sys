@@ -38,7 +38,7 @@ export default async function HeatmapReportPage({ searchParams }: Props) {
   const to   = parseDate(sp.to, now);
   to.setHours(23, 59, 59, 999);
 
-  const data = await getActivityHeatmap({ from, to }).catch(() => null);
+  const data = await getActivityHeatmap({ from, to }).catch((e) => { console.error("[heatmap-report] fetch failed:", e); return null; });
 
   const exportParams = {
     from: from.toISOString().slice(0, 10),

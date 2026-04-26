@@ -41,7 +41,7 @@ export default async function ProductsReportPage({ searchParams }: Props) {
     ...(activeFilter ? { active: activeFilter } : {}),
   };
 
-  const data = await getProductsReport({ from, to, ...(isActive !== undefined ? { isActive } : {}) }).catch(() => null);
+  const data = await getProductsReport({ from, to, ...(isActive !== undefined ? { isActive } : {}) }).catch((e) => { console.error("[products-report] fetch failed:", e); return null; });
 
   return (
     <ReportShell

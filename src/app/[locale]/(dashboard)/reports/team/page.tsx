@@ -26,7 +26,7 @@ export default async function TeamReportPage({ searchParams }: Props) {
   to.setHours(23, 59, 59, 999);
 
   const teamId = sp.teamId ?? undefined;
-  const data   = await getTeamReport({ from, to, ...(teamId ? { teamId } : {}) }).catch(() => null);
+  const data   = await getTeamReport({ from, to, ...(teamId ? { teamId } : {}) }).catch((e) => { console.error("[team-report] fetch failed:", e); return null; });
 
   const exportParams = {
     from: from.toISOString().slice(0, 10),

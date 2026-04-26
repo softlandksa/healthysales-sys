@@ -28,7 +28,7 @@ export default async function CompetitionsReportPage({ searchParams }: Props) {
   to.setHours(23, 59, 59, 999);
 
   const status = sp.status as CompetitionStatus | undefined;
-  const data   = await getCompetitionsReport({ from, to, ...(status ? { status } : {}) }).catch(() => null);
+  const data   = await getCompetitionsReport({ from, to, ...(status ? { status } : {}) }).catch((e) => { console.error("[competitions-report] fetch failed:", e); return null; });
 
   const exportParams = {
     from: from.toISOString().slice(0, 10),

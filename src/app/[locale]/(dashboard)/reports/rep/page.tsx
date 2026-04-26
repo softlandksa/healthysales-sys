@@ -36,7 +36,7 @@ export default async function RepReportPage({ searchParams }: Props) {
 
   const repId = user.role === "sales_rep" ? user.id : (sp.repId ?? user.id);
 
-  const data = await getRepReport({ repId, from, to }).catch(() => null);
+  const data = await getRepReport({ repId, from, to }).catch((e) => { console.error("[rep-report] fetch failed:", e); return null; });
 
   const exportParams = {
     repId,

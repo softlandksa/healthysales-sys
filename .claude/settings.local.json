@@ -40,7 +40,8 @@
       "Bash(echo \"EXIT CODE: $?\")",
       "Bash(pnpm tsc *)",
       "Bash(xargs grep *)",
-      "Bash(pnpm db:push)"
+      "Bash(pnpm db:push)",
+      "Bash(dir /s /b \"src\\\\app\\\\*reports*\")"
     ]
   }
 }

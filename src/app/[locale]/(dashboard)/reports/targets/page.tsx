@@ -54,7 +54,7 @@ export default async function TargetsReportPage({ searchParams }: Props) {
     ...(user.role === "sales_rep" ? { userId: user.id }      : {}),
   };
 
-  const data = await getTargetsReport({ from, to, ...(metricFilter ? { metric: metricFilter } : {}) }).catch(() => null);
+  const data = await getTargetsReport({ from, to, ...(metricFilter ? { metric: metricFilter } : {}) }).catch((e) => { console.error("[targets-report] fetch failed:", e); return null; });
 
   return (
     <ReportShell

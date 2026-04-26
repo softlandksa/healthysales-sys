@@ -54,7 +54,7 @@ export default async function VisitsReportPage({ searchParams }: Props) {
     ...(user.role === "sales_rep" ? { repId: user.id }       : {}),
   };
 
-  const data = await getVisitsReport({ from, to, ...(typeFilter ? { visitType: typeFilter } : {}) }).catch(() => null);
+  const data = await getVisitsReport({ from, to, ...(typeFilter ? { visitType: typeFilter } : {}) }).catch((e) => { console.error("[visits-report] fetch failed:", e); return null; });
 
   return (
     <ReportShell
