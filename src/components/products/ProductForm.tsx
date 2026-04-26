@@ -65,14 +65,13 @@ export function ProductForm({ mode, productId, defaultValues, units }: ProductFo
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <Label htmlFor="code" required>كود المنتج</Label>
+            <Label htmlFor="code">كود المنتج</Label>
             <Input
               id="code"
               name="code"
               dir="ltr"
               defaultValue={defaultValues?.code ?? ""}
-              placeholder="PRD-0001"
-              required
+              placeholder="يُولَّد تلقائياً إن تُرك فارغاً"
             />
           </div>
 
@@ -141,11 +140,18 @@ export function ProductForm({ mode, productId, defaultValues, units }: ProductFo
         </div>
 
         <div className="flex items-center gap-3">
+          <input
+            type="hidden"
+            name="isActive"
+            defaultValue={String(defaultValues?.isActive ?? true)}
+          />
           <Switch
             id="isActive"
-            name="isActive"
             defaultChecked={defaultValues?.isActive ?? true}
-            value="true"
+            onCheckedChange={(checked) => {
+              const input = document.querySelector<HTMLInputElement>('input[name="isActive"]');
+              if (input) input.value = checked ? "true" : "false";
+            }}
           />
           <Label htmlFor="isActive" className="cursor-pointer">منتج نشط</Label>
         </div>

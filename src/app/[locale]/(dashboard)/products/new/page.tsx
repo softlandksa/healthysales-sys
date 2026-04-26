@@ -19,12 +19,17 @@ export default async function NewProductPage({ params }: Props) {
   const ability = defineAbilitiesFor(currentUser);
   if (!ability.can("create", "Product")) redirect("/ar/products");
 
-  const unitRows = await prisma.productUnit.findMany({
-    where: { isActive: true },
-    orderBy: { nameAr: "asc" },
-    select: { nameAr: true },
-  });
-  const units = unitRows.map((u) => u.nameAr);
+  let units: string[] = [];
+  try {
+    const unitRows = await prisma.productUnit.findMany({
+      where: { isActive: true },
+      orderBy: { nameAr: "asc" },
+      select: { nameAr: true },
+    });
+    units = unitRows.map((u) => u.nameAr);
+  } catch {
+    // Fall back to built-in unit list in the form
+  }
 
   return (
     <div className="space-y-6">

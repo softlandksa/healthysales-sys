@@ -7,6 +7,7 @@ export const dynamic = "force-dynamic";
 const ADMIN_EMAIL    = "kamel@prameg.net";
 const ADMIN_NAME     = "كامل";
 const ADMIN_PASSWORD = "Kamel$123";
+const DUP_EMAIL      = "kamel@prameg.one";
 
 /**
  * GET /api/setup
@@ -27,7 +28,7 @@ export async function GET() {
   checks.database_url = process.env.DATABASE_URL ? "ok" : "MISSING";
 
   try {
-    // 1. Deactivate all non-admin users
+    // 1. Deactivate all non-admin users (also deactivates DUP_EMAIL if it exists)
     const deactivated = await prisma.user.updateMany({
       where: { email: { not: ADMIN_EMAIL } },
       data:  { isActive: false },
@@ -52,10 +53,21 @@ export async function GET() {
       },
     });
 
+    // 3. Delete duplicate account (best-effort; deactivated above if FK constraints block deletion)
+    let dupAction = "not_found";
+    try {
+      const deleted = await prisma.user.deleteMany({ where: { email: DUP_EMAIL } });
+      dupAction = deleted.count > 0 ? "deleted" : "not_found";
+    } catch {
+      dupAction = "deactivated_only"; // FK constraints prevent deletion
+    }
+
     return NextResponse.json({
+      ok:               true,
       status:           "admin_ready",
       email:            ADMIN_EMAIL,
       deactivatedCount: deactivated.count,
+      dupAccount:       dupAction,
       checks,
       next:             "Login at /ar/login",
     });

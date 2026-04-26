@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { z } from "zod";
 import { prisma } from "@/lib/db/prisma";
 import { withAuth } from "@/lib/rbac/access";
@@ -11,7 +12,7 @@ import type { ActionResult } from "@/types";
 // ─── Schemas ──────────────────────────────────────────────────────────────────
 
 const productSchema = z.object({
-  code: z.string().min(1, "الكود مطلوب").max(50).trim(),
+  code: z.string().max(50).trim().optional().or(z.literal("")),
   nameAr: z.string().min(2, "الاسم العربي مطلوب").max(200).trim(),
   nameEn: z.string().max(200).trim().optional().or(z.literal("")),
   description: z.string().max(2000).trim().optional().or(z.literal("")),
@@ -24,6 +25,13 @@ const productSchema = z.object({
     .or(z.literal("")),
   isActive: z.boolean().optional().default(true),
 });
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+async function generateProductCode(): Promise<string> {
+  const count = await prisma.product.count();
+  return `PRD-${String(count + 1).padStart(4, "0")}`;
+}
 
 // ─── Actions ──────────────────────────────────────────────────────────────────
 
@@ -50,14 +58,22 @@ export async function createProduct(
 
     const data = parsed.data;
 
-    const existing = await prisma.product.findUnique({ where: { code: data.code } });
+    // Auto-generate code if not provided
+    const code = (data.code && data.code.trim())
+      ? data.code.trim()
+      : await generateProductCode();
+
+    const existing = await prisma.product.findUnique({ where: { code } });
     if (existing) {
-      return { success: false, error: "كود المنتج مستخدم بالفعل" };
+      return {
+        success: false,
+        error: data.code ? "كود المنتج مستخدم بالفعل" : "حدث تعارض في الكود التلقائي. يرجى إدخاله يدوياً.",
+      };
     }
 
     const product = await prisma.product.create({
       data: {
-        code: data.code,
+        code,
         nameAr: data.nameAr,
         nameEn: data.nameEn || null,
         description: data.description || null,
@@ -77,10 +93,10 @@ export async function createProduct(
 
     revalidatePath("/ar/products");
     return { success: true, data: { id: product.id } };
-  }).catch((err: unknown) => ({
-    success: false,
-    error: err instanceof Error ? err.message : "تعذر إنشاء المنتج",
-  }));
+  }).catch((err: unknown) => {
+    if (isRedirectError(err)) throw err;
+    return { success: false, error: err instanceof Error ? err.message : "تعذر إنشاء المنتج" };
+  });
 }
 
 export async function updateProduct(
@@ -110,16 +126,19 @@ export async function updateProduct(
 
     const data = parsed.data;
 
+    // Keep existing code if user left the field empty
+    const code = (data.code && data.code.trim()) ? data.code.trim() : existing.code;
+
     // Check code uniqueness only if changed
-    if (data.code !== existing.code) {
-      const codeConflict = await prisma.product.findUnique({ where: { code: data.code } });
+    if (code !== existing.code) {
+      const codeConflict = await prisma.product.findUnique({ where: { code } });
       if (codeConflict) return { success: false, error: "كود المنتج مستخدم بالفعل" };
     }
 
     await prisma.product.update({
       where: { id: productId },
       data: {
-        code: data.code,
+        code,
         nameAr: data.nameAr,
         nameEn: data.nameEn || null,
         description: data.description || null,
@@ -140,10 +159,10 @@ export async function updateProduct(
     revalidatePath("/ar/products");
     revalidatePath(`/ar/products/${productId}/edit`);
     return { success: true };
-  }).catch((err: unknown) => ({
-    success: false,
-    error: err instanceof Error ? err.message : "تعذر تحديث المنتج",
-  }));
+  }).catch((err: unknown) => {
+    if (isRedirectError(err)) throw err;
+    return { success: false, error: err instanceof Error ? err.message : "تعذر تحديث المنتج" };
+  });
 }
 
 export async function toggleProductStatus(productId: string): Promise<ActionResult> {
@@ -165,10 +184,10 @@ export async function toggleProductStatus(productId: string): Promise<ActionResu
 
     revalidatePath("/ar/products");
     return { success: true };
-  }).catch((err: unknown) => ({
-    success: false,
-    error: err instanceof Error ? err.message : "تعذر تغيير حالة المنتج",
-  }));
+  }).catch((err: unknown) => {
+    if (isRedirectError(err)) throw err;
+    return { success: false, error: err instanceof Error ? err.message : "تعذر تغيير حالة المنتج" };
+  });
 }
 
 export async function deleteProduct(productId: string): Promise<ActionResult> {
@@ -186,10 +205,10 @@ export async function deleteProduct(productId: string): Promise<ActionResult> {
 
     revalidatePath("/ar/products");
     return { success: true };
-  }).catch((err: unknown) => ({
-    success: false,
-    error: err instanceof Error ? err.message : "تعذر حذف المنتج",
-  }));
+  }).catch((err: unknown) => {
+    if (isRedirectError(err)) throw err;
+    return { success: false, error: err instanceof Error ? err.message : "تعذر حذف المنتج" };
+  });
 }
 
 export async function searchProducts(q: string): Promise<{ id: string; nameAr: string; code: string; unit: string; price: string }[]> {

@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
@@ -122,10 +123,10 @@ export async function createCustomer(
 
     revalidatePath("/ar/customers");
     return { success: true, data: { id: customer.id } };
-  }).catch((err: unknown) => ({
-    success: false,
-    error: err instanceof Error ? err.message : "تعذر إنشاء العميل",
-  }));
+  }).catch((err: unknown) => {
+    if (isRedirectError(err)) throw err;
+    return { success: false, error: err instanceof Error ? err.message : "تعذر إنشاء العميل" };
+  });
 }
 
 export async function updateCustomer(
@@ -188,10 +189,10 @@ export async function updateCustomer(
     revalidatePath(`/ar/customers/${customerId}`);
     revalidatePath(`/ar/customers/${customerId}/edit`);
     return { success: true };
-  }).catch((err: unknown) => ({
-    success: false,
-    error: err instanceof Error ? err.message : "تعذر تحديث العميل",
-  }));
+  }).catch((err: unknown) => {
+    if (isRedirectError(err)) throw err;
+    return { success: false, error: err instanceof Error ? err.message : "تعذر تحديث العميل" };
+  });
 }
 
 export async function toggleCustomerStatus(customerId: string): Promise<ActionResult> {
@@ -213,10 +214,10 @@ export async function toggleCustomerStatus(customerId: string): Promise<ActionRe
 
     revalidatePath("/ar/customers");
     return { success: true };
-  }).catch((err: unknown) => ({
-    success: false,
-    error: err instanceof Error ? err.message : "تعذر تغيير حالة العميل",
-  }));
+  }).catch((err: unknown) => {
+    if (isRedirectError(err)) throw err;
+    return { success: false, error: err instanceof Error ? err.message : "تعذر تغيير حالة العميل" };
+  });
 }
 
 export async function addCustomerTransaction(
@@ -276,10 +277,10 @@ export async function addCustomerTransaction(
 
     revalidatePath(`/ar/customers/${customerId}`);
     return { success: true, data: { id: tx.id } };
-  }).catch((err: unknown) => ({
-    success: false,
-    error: err instanceof Error ? err.message : "تعذر إضافة الحركة",
-  }));
+  }).catch((err: unknown) => {
+    if (isRedirectError(err)) throw err;
+    return { success: false, error: err instanceof Error ? err.message : "تعذر إضافة الحركة" };
+  });
 }
 
 export async function searchCustomers(q: string): Promise<{ id: string; nameAr: string; code: string; balance: string }[]> {
