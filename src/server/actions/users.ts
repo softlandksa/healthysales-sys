@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/lib/db/prisma";
@@ -89,7 +90,6 @@ export async function createUser(
       },
     });
 
-    // If team_manager, assign as team manager
     if (data.role === "team_manager" && data.teamId) {
       await prisma.team.update({
         where: { id: data.teamId },
@@ -108,6 +108,7 @@ export async function createUser(
     revalidatePath("/ar/users");
     return { success: true, data: { id: user.id } };
   }).catch((err: unknown) => {
+    if (isRedirectError(err)) throw err;
     const message = err instanceof Error ? err.message : "تعذر إنشاء المستخدم";
     return { success: false, error: message };
   });
@@ -119,7 +120,6 @@ export async function updateUser(
   formData: FormData
 ): Promise<ActionResult> {
   return withAuth("update", "User", async (currentUser) => {
-    // Verify access
     const accessibleIds = await getAccessibleUserIds(currentUser);
     if (!accessibleIds.includes(userId)) {
       throw new ForbiddenError("ليس لديك صلاحية تعديل هذا المستخدم");
@@ -147,6 +147,14 @@ export async function updateUser(
     const oldUser = await prisma.user.findUnique({ where: { id: userId } });
     if (!oldUser) throw new NotFoundError("المستخدم غير موجود");
 
+    // Prevent deactivating the last active admin via edit form
+    if (data.isActive === false && oldUser.role === "admin") {
+      const activeAdminCount = await prisma.user.count({ where: { role: "admin", isActive: true } });
+      if (activeAdminCount <= 1) {
+        return { success: false, error: "لا يمكن تعطيل المدير الوحيد في النظام" };
+      }
+    }
+
     const updated = await prisma.user.update({
       where: { id: userId },
       data: {
@@ -159,7 +167,6 @@ export async function updateUser(
       },
     });
 
-    // Reassign team manager if role/team changed
     if (data.role === "team_manager" && data.teamId) {
       await prisma.team.update({
         where: { id: data.teamId },
@@ -179,6 +186,7 @@ export async function updateUser(
     revalidatePath(`/ar/users/${userId}/edit`);
     return { success: true };
   }).catch((err: unknown) => {
+    if (isRedirectError(err)) throw err;
     const message = err instanceof Error ? err.message : "تعذر تحديث المستخدم";
     return { success: false, error: message };
   });
@@ -192,6 +200,20 @@ export async function deactivateUser(userId: string): Promise<ActionResult> {
     }
     if (userId === currentUser.id) {
       return { success: false, error: "لا يمكنك تعطيل حسابك الخاص" };
+    }
+
+    const targetUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true },
+    });
+
+    if (targetUser?.role === "admin") {
+      const activeAdminCount = await prisma.user.count({
+        where: { role: "admin", isActive: true },
+      });
+      if (activeAdminCount <= 1) {
+        return { success: false, error: "لا يمكن تعطيل المدير الوحيد في النظام" };
+      }
     }
 
     await prisma.user.update({
@@ -208,14 +230,22 @@ export async function deactivateUser(userId: string): Promise<ActionResult> {
 
     revalidatePath("/ar/users");
     return { success: true };
-  }).catch((err: unknown) => ({
-    success: false,
-    error: err instanceof Error ? err.message : "تعذر تعطيل المستخدم",
-  }));
+  }).catch((err: unknown) => {
+    if (isRedirectError(err)) throw err;
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "تعذر تعطيل المستخدم",
+    };
+  });
 }
 
 export async function reactivateUser(userId: string): Promise<ActionResult> {
   return withAuth("update", "User", async (currentUser) => {
+    const accessibleIds = await getAccessibleUserIds(currentUser);
+    if (!accessibleIds.includes(userId)) {
+      throw new ForbiddenError("ليس لديك صلاحية تفعيل هذا المستخدم");
+    }
+
     await prisma.user.update({
       where: { id: userId },
       data: { isActive: true },
@@ -230,10 +260,13 @@ export async function reactivateUser(userId: string): Promise<ActionResult> {
 
     revalidatePath("/ar/users");
     return { success: true };
-  }).catch((err: unknown) => ({
-    success: false,
-    error: err instanceof Error ? err.message : "تعذر تفعيل المستخدم",
-  }));
+  }).catch((err: unknown) => {
+    if (isRedirectError(err)) throw err;
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "تعذر تفعيل المستخدم",
+    };
+  });
 }
 
 export async function changePassword(
@@ -249,7 +282,6 @@ export async function changePassword(
       return { success: false, error: parsed.error.errors[0]?.message ?? "بيانات غير صالحة" };
     }
 
-    // Only admin or self
     if (
       currentUser.role !== "admin" &&
       parsed.data.userId !== currentUser.id
@@ -271,10 +303,13 @@ export async function changePassword(
     });
 
     return { success: true };
-  }).catch((err: unknown) => ({
-    success: false,
-    error: err instanceof Error ? err.message : "تعذر تغيير كلمة المرور",
-  }));
+  }).catch((err: unknown) => {
+    if (isRedirectError(err)) throw err;
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "تعذر تغيير كلمة المرور",
+    };
+  });
 }
 
 export async function resetMyPassword(

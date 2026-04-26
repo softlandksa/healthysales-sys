@@ -7,23 +7,25 @@ import { getAccessibleUserIds } from "@/lib/rbac/access";
 import { prisma } from "@/lib/db/prisma";
 import { UserForm, ChangePasswordForm } from "@/components/users/UserForm";
 import { Breadcrumb } from "@/components/layout/Breadcrumb";
+import { AlertTriangle } from "lucide-react";
 import type { UserRole } from "@/types";
 
 export const metadata: Metadata = { title: "تعديل المستخدم" };
 
 interface Props { params: Promise<{ locale: string; id: string }> }
 
-export default async function EditUserPage({ params }: Props) {
-  const { locale, id } = await params;
-  setRequestLocale(locale);
+function PageError({ message }: { message: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
+      <div className="p-3 rounded-full bg-danger-50">
+        <AlertTriangle size={24} className="text-danger-600" />
+      </div>
+      <p className="text-sm text-text-secondary max-w-sm">{message}</p>
+    </div>
+  );
+}
 
-  const currentUser = await requireUser();
-  const ability = defineAbilitiesFor(currentUser);
-  if (!ability.can("update", "User")) redirect("/ar/users");
-
-  const accessibleIds = await getAccessibleUserIds(currentUser);
-  if (!accessibleIds.includes(id)) redirect("/ar/users");
-
+async function loadPageData(id: string, accessibleIds: string[]) {
   const [targetUser, teams, users] = await Promise.all([
     prisma.user.findUnique({
       where: { id },
@@ -39,12 +41,57 @@ export default async function EditUserPage({ params }: Props) {
       orderBy: { name: "asc" },
     }),
   ]);
+  return { targetUser, teams, users };
+}
 
-  if (!targetUser) notFound();
+export default async function EditUserPage({ params }: Props) {
+  const { locale, id } = await params;
+  setRequestLocale(locale);
+
+  const currentUser = await requireUser();
+  const ability = defineAbilitiesFor(currentUser);
+  if (!ability.can("update", "User")) redirect("/ar/users");
+
+  let accessibleIds: string[];
+  try {
+    accessibleIds = await getAccessibleUserIds(currentUser);
+  } catch {
+    return (
+      <div className="space-y-6">
+        <PageError message="تعذر التحقق من الصلاحيات. يرجى المحاولة مجدداً." />
+      </div>
+    );
+  }
+
+  if (!accessibleIds.includes(id)) redirect("/ar/users");
+
+  let data: Awaited<ReturnType<typeof loadPageData>>;
+  try {
+    data = await loadPageData(id, accessibleIds);
+  } catch {
+    return (
+      <div className="space-y-6">
+        <div>
+          <Breadcrumb
+            items={[
+              { label: "الرئيسية", href: "/ar/dashboard" },
+              { label: "المستخدمون", href: "/ar/users" },
+              { label: "تعديل المستخدم" },
+            ]}
+          />
+          <h1 className="text-2xl font-bold text-text-primary mt-2">تعديل المستخدم</h1>
+        </div>
+        <PageError message="تعذر تحميل بيانات المستخدم. يرجى المحاولة مجدداً." />
+      </div>
+    );
+  }
+
+  const { targetUser, teams, users } = data;
+
+  if (!targetUser) return notFound();
 
   const canResetPassword = currentUser.role === "admin" || currentUser.id === id;
 
-  // Build defaultValues without undefined (exactOptionalPropertyTypes)
   const defaultValues = {
     ...(targetUser.name !== null && { name: targetUser.name }),
     email: targetUser.email,

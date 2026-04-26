@@ -153,7 +153,6 @@ export function UserForm({ mode, userId, defaultValues, teams, users, currentUse
               <p className="text-xs text-text-muted">تعطيل الحساب يمنع تسجيل الدخول</p>
             </div>
             <Switch
-              name="isActive"
               defaultChecked={defaultValues?.isActive ?? true}
               onCheckedChange={(checked) => {
                 const input = document.querySelector<HTMLInputElement>('input[name="isActive"]');

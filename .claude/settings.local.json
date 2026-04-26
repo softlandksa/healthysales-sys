@@ -41,7 +41,10 @@
       "Bash(pnpm tsc *)",
       "Bash(xargs grep *)",
       "Bash(pnpm db:push)",
-      "Bash(dir /s /b \"src\\\\app\\\\*reports*\")"
+      "Bash(dir /s /b \"src\\\\app\\\\*reports*\")",
+      "Bash(node -e \"const pkg = require\\('./node_modules/next/package.json'\\); console.log\\('Next.js version:', pkg.version\\)\")",
+      "Bash(node -e \"const {isRedirectError} = require\\('./node_modules/next/dist/client/components/redirect-error.js'\\); console.log\\('isRedirectError:', typeof isRedirectError\\)\")",
+      "Bash(node -e ' *)"
     ]
   }
 }
