@@ -9,6 +9,11 @@ import { buildExpiryReport }        from "@/lib/reports/builders/expiry-report";
 import { buildCollectionsReport }   from "@/lib/reports/builders/collections-report";
 import { buildCompetitionsReport }  from "@/lib/reports/builders/competitions-report";
 import { buildActivityHeatmap }     from "@/lib/reports/builders/activity-heatmap";
+import { buildSalesReport }         from "@/lib/reports/builders/sales-report";
+import { buildVisitsReport }        from "@/lib/reports/builders/visits-report";
+import { buildTasksReport }         from "@/lib/reports/builders/tasks-report";
+import { buildProductsReport }      from "@/lib/reports/builders/products-report";
+import { buildTargetsReport }       from "@/lib/reports/builders/targets-report";
 import type {
   RepReportFilters,    RepReportData,
   TeamReportFilters,   TeamReportData,
@@ -17,6 +22,11 @@ import type {
   CollectionsReportFilters, CollectionsReportData,
   CompetitionsReportFilters, CompetitionsReportData,
   ActivityHeatmapFilters, ActivityHeatmapData,
+  SalesReportFilters,   SalesReportData,
+  VisitsReportFilters,  VisitsReportData,
+  TasksReportFilters,   TasksReportData,
+  ProductsReportFilters, ProductsReportData,
+  TargetsReportFilters, TargetsReportData,
 } from "@/lib/reports/types";
 
 // ─── Individual rep report ────────────────────────────────────────────────────
@@ -100,5 +110,61 @@ export async function getActivityHeatmap(filters: ActivityHeatmapFilters): Promi
       ...(user.role === "sales_rep" ? { repId: user.id } : {}),
     };
     return buildActivityHeatmap(scopedFilters, accessible);
+  });
+}
+
+// ─── Sales report ─────────────────────────────────────────────────────────────
+
+export async function getSalesReport(filters: SalesReportFilters): Promise<SalesReportData> {
+  return withAuth("read", "Report", async (user) => {
+    const accessible = await getAccessibleUserIds(user);
+    return buildSalesReport(
+      { ...filters, ...(user.role === "sales_rep" ? { repId: user.id } : {}) },
+      accessible
+    );
+  });
+}
+
+// ─── Visits report ────────────────────────────────────────────────────────────
+
+export async function getVisitsReport(filters: VisitsReportFilters): Promise<VisitsReportData> {
+  return withAuth("read", "Report", async (user) => {
+    const accessible = await getAccessibleUserIds(user);
+    return buildVisitsReport(
+      { ...filters, ...(user.role === "sales_rep" ? { repId: user.id } : {}) },
+      accessible
+    );
+  });
+}
+
+// ─── Tasks report ─────────────────────────────────────────────────────────────
+
+export async function getTasksReport(filters: TasksReportFilters): Promise<TasksReportData> {
+  return withAuth("read", "Report", async (user) => {
+    const accessible = await getAccessibleUserIds(user);
+    return buildTasksReport(
+      { ...filters, ...(user.role === "sales_rep" ? { assignedToId: user.id } : {}) },
+      accessible
+    );
+  });
+}
+
+// ─── Products report ──────────────────────────────────────────────────────────
+
+export async function getProductsReport(filters: ProductsReportFilters): Promise<ProductsReportData> {
+  return withAuth("read", "Report", async () => {
+    return buildProductsReport(filters);
+  });
+}
+
+// ─── Targets report ───────────────────────────────────────────────────────────
+
+export async function getTargetsReport(filters: TargetsReportFilters): Promise<TargetsReportData> {
+  return withAuth("read", "Report", async (user) => {
+    const accessible = await getAccessibleUserIds(user);
+    return buildTargetsReport(
+      { ...filters, ...(user.role === "sales_rep" ? { userId: user.id } : {}) },
+      accessible
+    );
   });
 }

@@ -254,6 +254,194 @@ export interface ActivityHeatmapData {
   totalVisits: number;
 }
 
+// ─── 8. Sales Report ─────────────────────────────────────────────────────────
+
+export interface SalesReportFilters extends DateRangeFilter {
+  repId?:  string;
+  teamId?: string;
+  status?: string;
+}
+
+export interface SalesRepRow {
+  repId:   string;
+  repName: string | null;
+  orders:  number;
+  amount:  number;
+}
+
+export interface SalesProductRow {
+  productId:   string;
+  productName: string;
+  productCode: string;
+  unit:        string;
+  quantity:    number;
+  revenue:     number;
+}
+
+export interface SalesOrderDetailRow {
+  id:           string;
+  code:         string;
+  customerName: string;
+  repName:      string | null;
+  status:       string;
+  total:        number;
+  createdAt:    Date;
+}
+
+export interface SalesReportData {
+  summary: {
+    totalOrders:    number;
+    totalAmount:    number;
+    avgOrderValue:  number;
+    confirmedCount: number;
+    collectedCount: number;
+    cancelledCount: number;
+    deliveredCount: number;
+  };
+  byRep:     SalesRepRow[];
+  byProduct: SalesProductRow[];
+  orders:    SalesOrderDetailRow[];
+}
+
+// ─── 9. Visits Report ────────────────────────────────────────────────────────
+
+export interface VisitsReportFilters extends DateRangeFilter {
+  repId?:     string;
+  visitType?: string;
+}
+
+export interface VisitRepRow {
+  repId:      string;
+  repName:    string | null;
+  total:      number;
+  visitOnly:  number;
+  sale:       number;
+  collection: number;
+}
+
+export interface VisitDetailRow {
+  id:           string;
+  visitedAt:    Date;
+  customerName: string;
+  repName:      string | null;
+  visitType:    string;
+  notes:        string | null;
+}
+
+export interface VisitsReportData {
+  summary: {
+    total:           number;
+    uniqueCustomers: number;
+    avgPerDay:       number;
+    visitOnly:       number;
+    sale:            number;
+    collection:      number;
+  };
+  byRep:  VisitRepRow[];
+  visits: VisitDetailRow[];
+}
+
+// ─── 10. Tasks Report ────────────────────────────────────────────────────────
+
+export interface TasksReportFilters extends DateRangeFilter {
+  assignedToId?: string;
+  status?:       string;
+}
+
+export interface TaskAssigneeRow {
+  userId:     string;
+  userName:   string | null;
+  total:      number;
+  done:       number;
+  pending:    number;
+  inProgress: number;
+  blocked:    number;
+}
+
+export interface TaskDetailRow {
+  id:         string;
+  title:      string;
+  status:     string;
+  dueDate:    Date;
+  assignedTo: string | null;
+  assignedBy: string | null;
+  isOverdue:  boolean;
+  createdAt:  Date;
+}
+
+export interface TasksReportData {
+  summary: {
+    total:      number;
+    pending:    number;
+    inProgress: number;
+    done:       number;
+    blocked:    number;
+    cancelled:  number;
+    overdue:    number;
+  };
+  byAssignee: TaskAssigneeRow[];
+  tasks:      TaskDetailRow[];
+}
+
+// ─── 11. Products Report ─────────────────────────────────────────────────────
+
+export interface ProductsReportFilters extends DateRangeFilter {
+  isActive?: boolean;
+}
+
+export interface ProductSalesRow {
+  productId:    string;
+  productName:  string;
+  productCode:  string;
+  unit:         string;
+  price:        number;
+  isActive:     boolean;
+  quantitySold: number;
+  revenue:      number;
+}
+
+export interface ProductsReportData {
+  summary: {
+    total:        number;
+    active:       number;
+    inactive:     number;
+    totalRevenue: number;
+  };
+  products: ProductSalesRow[];
+}
+
+// ─── 12. Targets Report ──────────────────────────────────────────────────────
+
+export interface TargetsReportFilters extends DateRangeFilter {
+  userId?:  string;
+  metric?:  string;
+}
+
+export interface TargetDetailRow {
+  id:          string;
+  userId:      string;
+  userName:    string | null;
+  metric:      string;
+  period:      string;
+  periodStart: Date;
+  periodEnd:   Date;
+  targetValue: number;
+  actual:      number | null;
+  pct:         number | null;
+}
+
+export interface TargetsReportData {
+  summary: {
+    totalTargets:   number;
+    uniqueUsers:    number;
+    avgAchievement: number;
+    fullyAchieved:  number;
+    atRisk:         number;
+  };
+  targets:  TargetDetailRow[];
+  byMetric: { metric: string; count: number; avgAchievement: number }[];
+}
+
 // ─── Export helpers ───────────────────────────────────────────────────────────
 
 export type ReportType =

@@ -43,8 +43,8 @@ export async function AdminDashboard() {
       <DashboardSummary />
 
       {/* System health */}
-      <div className="card p-5 space-y-4">
-        <h3 className="text-sm font-semibold text-text-primary">صحة النظام</h3>
+      <div className="card p-5 space-y-4" style={{ background: "linear-gradient(135deg, #f8fafc 0%, #ffffff 70%)" }}>
+        <h3 className="text-sm font-bold text-text-primary">صحة النظام</h3>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
           <div className="flex flex-col gap-1">
             <p className="text-2xl font-bold num text-text-primary">{formatNumber(openTasks)}</p>
@@ -80,10 +80,10 @@ export async function AdminDashboard() {
       </div>
 
       {/* Recent audit log */}
-      <div className="card p-5 space-y-4">
+      <div className="card p-5 space-y-4" style={{ background: "linear-gradient(135deg, #eef2ff 0%, #ffffff 70%)" }}>
         <div className="flex items-center gap-2">
-          <Activity size={16} className="text-text-secondary" />
-          <h3 className="text-sm font-semibold text-text-primary">آخر النشاطات</h3>
+          <Activity size={16} className="text-indigo-500" />
+          <h3 className="text-sm font-bold text-text-primary">آخر النشاطات</h3>
         </div>
         <div className="divide-y divide-border">
           {recentAudit.map((log) => (

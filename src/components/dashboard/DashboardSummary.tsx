@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db/prisma";
 import { currentMonthPeriod } from "@/lib/targets/periods";
 import { formatSAR, formatNumber, cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
+import type { CSSProperties } from "react";
 
 const RIYADH_OFFSET_MS = 3 * 60 * 60 * 1000;
 
@@ -17,38 +18,48 @@ function dayBounds(now: Date, offsetDays: number) {
   return { start, end };
 }
 
-interface MetricSlot { label: string; value: string }
+interface MetricSlot {
+  label: string;
+  value: string;
+  badge: string;
+}
 
 function SectionCard({
-  icon: Icon, iconBg, iconColor, title, slots,
+  icon: Icon, iconBg, iconColor, title, slots, cardStyle,
 }: {
   icon: LucideIcon;
   iconBg: string;
   iconColor: string;
   title: string;
   slots: [MetricSlot, MetricSlot, MetricSlot];
+  cardStyle: CSSProperties;
 }) {
   return (
-    <div className="card p-5 space-y-4">
+    <div className="card p-5 space-y-5 overflow-hidden" style={cardStyle}>
       <div className="flex items-center gap-3">
         <div className={cn("p-2.5 rounded-card shrink-0", iconBg)}>
-          <Icon size={20} className={iconColor} />
+          <Icon size={22} className={iconColor} />
         </div>
-        <h3 className="font-semibold text-text-primary text-base">{title}</h3>
+        <h3 className="font-bold text-text-primary text-base">{title}</h3>
       </div>
-      <div className="grid grid-cols-3 border-t border-border pt-4">
+      <div className="grid grid-cols-3 border-t border-border/60 pt-4">
         {slots.map((s, i) => (
           <div
             key={s.label}
             className={cn(
-              "flex flex-col gap-1 px-3",
+              "flex flex-col gap-2 px-3",
               i === 0 && "pr-0",
               i === 2 && "pl-0",
-              i > 0 && "border-r border-border"
+              i > 0 && "border-r border-border/60"
             )}
           >
-            <p className="text-xs text-text-muted">{s.label}</p>
-            <p className="text-xl font-bold num text-text-primary leading-tight">{s.value}</p>
+            <span className={cn(
+              "inline-flex w-fit text-xs font-semibold px-2 py-0.5 rounded-full leading-tight",
+              s.badge
+            )}>
+              {s.label}
+            </span>
+            <p className="text-[1.375rem] font-bold num text-text-primary leading-tight">{s.value}</p>
           </div>
         ))}
       </div>
@@ -106,46 +117,50 @@ export async function DashboardSummary({ repIdFilter, taskAssigneeFilter }: Dash
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <SectionCard
         icon={ShoppingCart}
-        iconBg="bg-brand-50"
-        iconColor="text-brand-600"
+        iconBg="bg-blue-100"
+        iconColor="text-blue-600"
         title="المبيعات"
+        cardStyle={{ background: "linear-gradient(135deg, #eff6ff 0%, #ffffff 65%)" }}
         slots={[
-          { label: "اليوم",     value: formatSAR(agg(sTodayR)) },
-          { label: "أمس",       value: formatSAR(agg(sYestR))  },
-          { label: "هذا الشهر", value: formatSAR(agg(sMonthR)) },
+          { label: "اليوم",     value: formatSAR(agg(sTodayR)), badge: "bg-blue-100 text-blue-700"   },
+          { label: "أمس",       value: formatSAR(agg(sYestR)),  badge: "bg-neutral-100 text-neutral-600" },
+          { label: "هذا الشهر", value: formatSAR(agg(sMonthR)), badge: "bg-slate-50 text-slate-400 border border-slate-200" },
         ]}
       />
       <SectionCard
         icon={Wallet}
-        iconBg="bg-success-50"
-        iconColor="text-success-600"
+        iconBg="bg-emerald-100"
+        iconColor="text-emerald-600"
         title="التحصيلات"
+        cardStyle={{ background: "linear-gradient(135deg, #f0fdf4 0%, #ffffff 65%)" }}
         slots={[
-          { label: "اليوم",     value: formatSAR(aggA(cTodayR)) },
-          { label: "أمس",       value: formatSAR(aggA(cYestR))  },
-          { label: "هذا الشهر", value: formatSAR(aggA(cMonthR)) },
+          { label: "اليوم",     value: formatSAR(aggA(cTodayR)), badge: "bg-emerald-100 text-emerald-700"   },
+          { label: "أمس",       value: formatSAR(aggA(cYestR)),  badge: "bg-neutral-100 text-neutral-600" },
+          { label: "هذا الشهر", value: formatSAR(aggA(cMonthR)), badge: "bg-slate-50 text-slate-400 border border-slate-200" },
         ]}
       />
       <SectionCard
         icon={MapPin}
-        iconBg="bg-warning-50"
-        iconColor="text-warning-600"
+        iconBg="bg-amber-100"
+        iconColor="text-amber-600"
         title="الزيارات"
+        cardStyle={{ background: "linear-gradient(135deg, #fffbeb 0%, #ffffff 65%)" }}
         slots={[
-          { label: "اليوم",     value: formatNumber(cnt(vTodayR)) },
-          { label: "أمس",       value: formatNumber(cnt(vYestR))  },
-          { label: "هذا الشهر", value: formatNumber(cnt(vMonthR)) },
+          { label: "اليوم",     value: formatNumber(cnt(vTodayR)), badge: "bg-amber-100 text-amber-700"   },
+          { label: "أمس",       value: formatNumber(cnt(vYestR)),  badge: "bg-neutral-100 text-neutral-600" },
+          { label: "هذا الشهر", value: formatNumber(cnt(vMonthR)), badge: "bg-slate-50 text-slate-400 border border-slate-200" },
         ]}
       />
       <SectionCard
         icon={ClipboardList}
-        iconBg="bg-purple-50"
-        iconColor="text-chart-5"
+        iconBg="bg-violet-100"
+        iconColor="text-violet-600"
         title="المهام"
+        cardStyle={{ background: "linear-gradient(135deg, #f5f3ff 0%, #ffffff 65%)" }}
         slots={[
-          { label: "جديدة",       value: formatNumber(cnt(tPendR)) },
-          { label: "قيد التنفيذ", value: formatNumber(cnt(tIpR))   },
-          { label: "منجزة",       value: formatNumber(cnt(tDoneR)) },
+          { label: "جديدة",       value: formatNumber(cnt(tPendR)), badge: "bg-amber-100 text-amber-700"   },
+          { label: "قيد التنفيذ", value: formatNumber(cnt(tIpR)),   badge: "bg-blue-100 text-blue-700"     },
+          { label: "منجزة",       value: formatNumber(cnt(tDoneR)), badge: "bg-emerald-100 text-emerald-700" },
         ]}
       />
     </div>
