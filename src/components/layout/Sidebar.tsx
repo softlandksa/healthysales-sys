@@ -6,8 +6,9 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, MapPin, ShoppingCart, Users, BarChart3,
   Target, UserCircle, Settings, ChevronLeft, Package, Wallet,
-  ClipboardList, Trophy, ShieldCheck, FileSearch,
+  ClipboardList, Trophy, ShieldCheck, FileSearch, LogOut,
 } from "lucide-react";
+import { signOut } from "next-auth/react";
 import { useState } from "react";
 import type { SessionUser, UserRole } from "@/types";
 
@@ -181,12 +182,24 @@ export default function Sidebar({ user }: SidebarProps) {
         })}
       </nav>
 
-      {/* Footer */}
-      {!collapsed && (
-        <div className="p-3 border-t border-border">
-          <p className="text-[10px] text-text-muted text-center num">v0.1.0</p>
-        </div>
-      )}
+      {/* Logout + footer */}
+      <div className="shrink-0 border-t border-border p-2 space-y-1">
+        <button
+          onClick={() => signOut({ callbackUrl: "/ar/login" })}
+          title="تسجيل الخروج"
+          className={cn(
+            "w-full flex items-center gap-3 px-3 py-2.5 rounded-button text-sm font-semibold transition-colors",
+            "text-danger-600 hover:bg-danger-50",
+            collapsed && "justify-center px-2"
+          )}
+        >
+          <LogOut size={18} className="shrink-0" />
+          {!collapsed && <span>تسجيل الخروج</span>}
+        </button>
+        {!collapsed && (
+          <p className="text-[10px] text-text-muted text-center num px-3">v0.1.0</p>
+        )}
+      </div>
     </aside>
   );
 }

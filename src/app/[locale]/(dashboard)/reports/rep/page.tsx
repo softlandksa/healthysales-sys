@@ -1,17 +1,14 @@
 import type { Metadata } from "next";
 import { requireUser } from "@/lib/auth/current-user";
-import { getRepReport } from "@/server/actions/reports";
+import { getSalesReport } from "@/server/actions/reports";
+import { getVisitsReport } from "@/server/actions/reports";
 import { ReportShell } from "@/components/reports/ReportShell";
 import { DateRangeFilter } from "@/components/reports/DateRangeFilter";
-import { ExportMenu } from "@/components/reports/ExportMenu";
-import { StatCard } from "@/components/kpi/stat-card";
-import { BarChart } from "@/components/charts/bar-chart";
-import { formatSAR, formatNumber } from "@/lib/utils";
-import { ShoppingCart, MapPin, Wallet, TrendingUp } from "lucide-react";
+import { formatSAR, formatNumber, cn } from "@/lib/utils";
 import { currentMonthPeriod } from "@/lib/targets/periods";
+import { UserCircle, ShoppingCart, MapPin, TrendingUp } from "lucide-react";
 
-export const metadata: Metadata = { title: "تقرير المندوب" };
-
+export const metadata: Metadata = { title: "تقرير المندوبين" };
 interface Props { searchParams: Promise<Record<string, string>> }
 
 function parseDate(s: string | undefined, fallback: Date): Date {
@@ -20,123 +17,178 @@ function parseDate(s: string | undefined, fallback: Date): Date {
   return isNaN(d.getTime()) ? fallback : d;
 }
 
+function getInitials(name: string | null, fallback: string): string {
+  if (!name) return fallback.slice(0, 2).toUpperCase();
+  return name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
+}
+
+const CARD_COLORS = [
+  { bg: "#eff6ff", iconBg: "bg-blue-100",    iconColor: "text-blue-600",    ring: "ring-blue-200"    },
+  { bg: "#f0fdf4", iconBg: "bg-emerald-100", iconColor: "text-emerald-600", ring: "ring-emerald-200" },
+  { bg: "#fffbeb", iconBg: "bg-amber-100",   iconColor: "text-amber-600",   ring: "ring-amber-200"   },
+  { bg: "#f5f3ff", iconBg: "bg-violet-100",  iconColor: "text-violet-600",  ring: "ring-violet-200"  },
+  { bg: "#fef2f2", iconBg: "bg-rose-100",    iconColor: "text-rose-600",    ring: "ring-rose-200"    },
+  { bg: "#ecfdf5", iconBg: "bg-teal-100",    iconColor: "text-teal-600",    ring: "ring-teal-200"    },
+];
+
 export default async function RepReportPage({ searchParams }: Props) {
   const sp   = await searchParams;
   const user = await requireUser();
+  const now  = new Date();
+  const { periodStart } = currentMonthPeriod(now);
 
-  const now   = new Date();
-  const month = currentMonthPeriod(now);
-
-  const defaultFrom = month.periodStart;
-  const defaultTo   = now;
-
-  const from  = parseDate(sp.from, defaultFrom);
-  const to    = parseDate(sp.to, defaultTo);
+  const from = parseDate(sp.from, periodStart);
+  const to   = parseDate(sp.to, now);
   to.setHours(23, 59, 59, 999);
 
-  const repId = user.role === "sales_rep" ? user.id : (sp.repId ?? user.id);
-
-  const data = await getRepReport({ repId, from, to }).catch((e) => { console.error("[rep-report] fetch failed:", e); return null; });
-
   const exportParams = {
-    repId,
     from: from.toISOString().slice(0, 10),
     to:   to.toISOString().slice(0, 10),
+    ...(user.role === "sales_rep" ? { repId: user.id } : {}),
   };
 
-  const chartData = data?.monthlyTrend.map((m) => ({
-    month:       m.month,
-    sales:       m.sales,
-    collections: m.collections,
-    visits:      m.visits,
-  })) ?? [];
+  const [salesR, visitsR] = await Promise.allSettled([
+    getSalesReport({ from, to }).catch((e) => { console.error("[rep-report] sales fetch failed:", e); return null; }),
+    getVisitsReport({ from, to }).catch((e) => { console.error("[rep-report] visits fetch failed:", e); return null; }),
+  ]);
+
+  const salesData  = salesR.status  === "fulfilled" ? salesR.value  : null;
+  const visitsData = visitsR.status === "fulfilled" ? visitsR.value : null;
+
+  // Merge per-rep data
+  type RepRow = { repId: string; repName: string | null; sales: number; orders: number; visits: number };
+  const repMap = new Map<string, RepRow>();
+
+  for (const r of salesData?.byRep ?? []) {
+    repMap.set(r.repId, { repId: r.repId, repName: r.repName, sales: r.amount, orders: r.orders, visits: 0 });
+  }
+  for (const r of visitsData?.byRep ?? []) {
+    const cur = repMap.get(r.repId) ?? { repId: r.repId, repName: r.repName, sales: 0, orders: 0, visits: 0 };
+    cur.visits = r.total;
+    if (!cur.repName) cur.repName = r.repName;
+    repMap.set(r.repId, cur);
+  }
+
+  const repRows = [...repMap.values()].sort((a, b) => b.sales - a.sales);
+
+  const totalSales   = repRows.reduce((s, r) => s + r.sales, 0);
+  const totalOrders  = repRows.reduce((s, r) => s + r.orders, 0);
+  const totalVisits  = repRows.reduce((s, r) => s + r.visits, 0);
 
   return (
     <ReportShell
-      title="تقرير المندوب"
-      description={data?.rep.name ?? repId}
+      title="تقرير المندوبين"
+      description="أداء المندوبين: المبيعات، الزيارات، الطلبات"
       type="rep"
       exportParams={exportParams}
     >
-      <div className="flex items-center justify-between gap-4 print:hidden">
+      {/* Filters */}
+      <div className="print:hidden">
         <DateRangeFilter />
-        <ExportMenu type="rep" params={exportParams} />
       </div>
 
-      {!data ? (
-        <p className="text-center text-text-secondary py-12">لا توجد بيانات لهذه الفترة</p>
+      {repRows.length === 0 ? (
+        <div className="card p-12 text-center text-text-secondary">
+          <UserCircle size={40} className="mx-auto mb-3 text-text-muted" />
+          <p className="font-medium">لا توجد بيانات لهذه الفترة</p>
+          <p className="text-sm mt-1">جرب تغيير نطاق التاريخ</p>
+        </div>
       ) : (
         <>
-          {/* Summary KPIs */}
-          <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-            <StatCard label="المبيعات المحصَّلة" value={formatSAR(data.summary.totalSales)}
-              icon={ShoppingCart} iconColor="text-brand-600" iconBg="bg-brand-50" />
-            <StatCard label="التحصيلات" value={formatSAR(data.summary.totalCollections)}
-              icon={Wallet} iconColor="text-success-600" iconBg="bg-success-50" />
-            <StatCard label="الزيارات" value={formatNumber(data.summary.totalVisits)}
-              icon={MapPin} iconColor="text-warning-600" iconBg="bg-warning-50" />
-            <StatCard label="متوسط الطلب" value={formatSAR(data.summary.avgOrderValue)}
-              icon={TrendingUp} iconColor="text-chart-5" iconBg="bg-purple-50" />
+          {/* Summary bar */}
+          <div className="grid grid-cols-3 gap-4">
+            <div className="card p-4 text-center">
+              <ShoppingCart size={18} className="mx-auto mb-1 text-blue-500" />
+              <p className="text-xs text-text-secondary">إجمالي المبيعات</p>
+              <p className="text-lg font-bold num text-blue-700 mt-0.5">{formatSAR(totalSales)}</p>
+            </div>
+            <div className="card p-4 text-center">
+              <TrendingUp size={18} className="mx-auto mb-1 text-emerald-500" />
+              <p className="text-xs text-text-secondary">إجمالي الطلبات</p>
+              <p className="text-lg font-bold num text-emerald-700 mt-0.5">{formatNumber(totalOrders)}</p>
+            </div>
+            <div className="card p-4 text-center">
+              <MapPin size={18} className="mx-auto mb-1 text-amber-500" />
+              <p className="text-xs text-text-secondary">إجمالي الزيارات</p>
+              <p className="text-lg font-bold num text-amber-700 mt-0.5">{formatNumber(totalVisits)}</p>
+            </div>
           </div>
 
-          {/* Monthly trend chart */}
-          {chartData.length > 0 && (
-            <div className="card p-5 space-y-4">
-              <h3 className="text-sm font-semibold text-text-primary">الاتجاه الشهري</h3>
-              <BarChart
-                data={chartData}
-                xKey="month"
-                series={[
-                  { key: "sales",       label: "المبيعات",    color: "#2563eb" },
-                  { key: "collections", label: "التحصيلات",   color: "#16a34a" },
-                ]}
-                height={220}
-                valueFormatter={(v) => formatSAR(v)}
-              />
-            </div>
-          )}
+          {/* Rep cards grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+            {repRows.map((rep, i) => {
+              const color = CARD_COLORS[i % CARD_COLORS.length] ?? { bg: "#eff6ff", iconBg: "bg-blue-100", iconColor: "text-blue-600", ring: "ring-blue-200" };
+              const initials = getInitials(rep.repName, rep.repId);
+              const salesPct = totalSales > 0 ? (rep.sales / totalSales) * 100 : 0;
+              return (
+                <div
+                  key={rep.repId}
+                  className="card p-5 space-y-4 border border-border"
+                  style={{ background: color.bg }}
+                >
+                  {/* Avatar + name */}
+                  <div className="flex items-center gap-3">
+                    <div className={cn(
+                      "w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ring-2",
+                      color.iconBg, color.iconColor, color.ring
+                    )}>
+                      {initials}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-bold text-text-primary text-sm truncate">
+                        {rep.repName ?? rep.repId}
+                      </p>
+                      <p className="text-xs text-text-muted">مندوب مبيعات</p>
+                    </div>
+                    {i < 3 && (
+                      <span className={cn(
+                        "mr-auto text-xs font-semibold px-2 py-0.5 rounded-full",
+                        i === 0 ? "bg-amber-100 text-amber-700" :
+                        i === 1 ? "bg-slate-100 text-slate-600" :
+                                  "bg-orange-100 text-orange-700"
+                      )}>
+                        #{i + 1}
+                      </span>
+                    )}
+                  </div>
 
-          {/* Top customers + products */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div className="card p-5 space-y-3">
-              <h3 className="text-sm font-semibold text-text-primary">أفضل العملاء</h3>
-              <table className="w-full text-sm">
-                <thead><tr className="text-text-secondary text-xs">
-                  <th className="text-right py-1">العميل</th>
-                  <th className="text-right py-1">المبيعات</th>
-                  <th className="text-right py-1">الزيارات</th>
-                </tr></thead>
-                <tbody className="divide-y divide-border">
-                  {data.topCustomers.map((c) => (
-                    <tr key={c.customerId}>
-                      <td className="py-1.5 text-text-primary">{c.customerName}</td>
-                      <td className="py-1.5 num text-text-secondary">{formatSAR(c.sales)}</td>
-                      <td className="py-1.5 num text-center text-text-secondary">{c.visits}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  {/* Stats */}
+                  <div className="grid grid-cols-3 gap-2 pt-3 border-t border-border/50">
+                    <div className="text-center">
+                      <ShoppingCart size={14} className={cn("mx-auto mb-1", color.iconColor)} />
+                      <p className="text-[11px] text-text-secondary">المبيعات</p>
+                      <p className="text-sm font-bold num text-text-primary">{formatSAR(rep.sales)}</p>
+                    </div>
+                    <div className="text-center border-r border-border/50">
+                      <TrendingUp size={14} className={cn("mx-auto mb-1", color.iconColor)} />
+                      <p className="text-[11px] text-text-secondary">الطلبات</p>
+                      <p className="text-sm font-bold num text-text-primary">{formatNumber(rep.orders)}</p>
+                    </div>
+                    <div className="text-center border-r border-border/50">
+                      <MapPin size={14} className={cn("mx-auto mb-1", color.iconColor)} />
+                      <p className="text-[11px] text-text-secondary">الزيارات</p>
+                      <p className="text-sm font-bold num text-text-primary">{formatNumber(rep.visits)}</p>
+                    </div>
+                  </div>
 
-            <div className="card p-5 space-y-3">
-              <h3 className="text-sm font-semibold text-text-primary">أفضل المنتجات</h3>
-              <table className="w-full text-sm">
-                <thead><tr className="text-text-secondary text-xs">
-                  <th className="text-right py-1">المنتج</th>
-                  <th className="text-right py-1">الوحدات</th>
-                  <th className="text-right py-1">الإيراد</th>
-                </tr></thead>
-                <tbody className="divide-y divide-border">
-                  {data.topProducts.map((p) => (
-                    <tr key={p.productId}>
-                      <td className="py-1.5 text-text-primary">{p.productName}</td>
-                      <td className="py-1.5 num text-center text-text-secondary">{formatNumber(p.units)}</td>
-                      <td className="py-1.5 num text-text-secondary">{formatSAR(p.revenue)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  {/* Sales share bar */}
+                  {totalSales > 0 && (
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between text-[11px] text-text-muted">
+                        <span>حصة المبيعات</span>
+                        <span className="num font-semibold">{salesPct.toFixed(1)}%</span>
+                      </div>
+                      <div className="h-1.5 bg-white/60 rounded-full overflow-hidden">
+                        <div
+                          className={cn("h-full rounded-full transition-all", color.iconBg.replace("bg-", "bg-").replace("-100", "-400"))}
+                          style={{ width: `${Math.min(100, salesPct)}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </>
       )}

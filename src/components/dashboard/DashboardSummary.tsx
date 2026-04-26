@@ -120,7 +120,7 @@ export async function DashboardSummary({ repIdFilter, taskAssigneeFilter }: Dash
         iconBg="bg-blue-100"
         iconColor="text-blue-600"
         title="المبيعات"
-        cardStyle={{ background: "linear-gradient(135deg, #eff6ff 0%, #ffffff 65%)" }}
+        cardStyle={{ background: "#eff6ff" }}
         slots={[
           { label: "اليوم",     value: formatSAR(agg(sTodayR)), badge: "bg-blue-100 text-blue-700"   },
           { label: "أمس",       value: formatSAR(agg(sYestR)),  badge: "bg-neutral-100 text-neutral-600" },
@@ -132,7 +132,7 @@ export async function DashboardSummary({ repIdFilter, taskAssigneeFilter }: Dash
         iconBg="bg-emerald-100"
         iconColor="text-emerald-600"
         title="التحصيلات"
-        cardStyle={{ background: "linear-gradient(135deg, #f0fdf4 0%, #ffffff 65%)" }}
+        cardStyle={{ background: "#f0fdf4" }}
         slots={[
           { label: "اليوم",     value: formatSAR(aggA(cTodayR)), badge: "bg-emerald-100 text-emerald-700"   },
           { label: "أمس",       value: formatSAR(aggA(cYestR)),  badge: "bg-neutral-100 text-neutral-600" },
@@ -144,7 +144,7 @@ export async function DashboardSummary({ repIdFilter, taskAssigneeFilter }: Dash
         iconBg="bg-amber-100"
         iconColor="text-amber-600"
         title="الزيارات"
-        cardStyle={{ background: "linear-gradient(135deg, #fffbeb 0%, #ffffff 65%)" }}
+        cardStyle={{ background: "#fffbeb" }}
         slots={[
           { label: "اليوم",     value: formatNumber(cnt(vTodayR)), badge: "bg-amber-100 text-amber-700"   },
           { label: "أمس",       value: formatNumber(cnt(vYestR)),  badge: "bg-neutral-100 text-neutral-600" },
@@ -156,7 +156,7 @@ export async function DashboardSummary({ repIdFilter, taskAssigneeFilter }: Dash
         iconBg="bg-violet-100"
         iconColor="text-violet-600"
         title="المهام"
-        cardStyle={{ background: "linear-gradient(135deg, #f5f3ff 0%, #ffffff 65%)" }}
+        cardStyle={{ background: "#f5f3ff" }}
         slots={[
           { label: "جديدة",       value: formatNumber(cnt(tPendR)), badge: "bg-amber-100 text-amber-700"   },
           { label: "قيد التنفيذ", value: formatNumber(cnt(tIpR)),   badge: "bg-blue-100 text-blue-700"     },
