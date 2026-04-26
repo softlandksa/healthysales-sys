@@ -43,7 +43,7 @@ const itemSchema = z.object({
   unitPrice: z
     .string()
     .regex(/^\d+(\.\d{1,2})?$/, "السعر غير صالح")
-    .refine((v) => parseFloat(v) > 0, "السعر يجب أن يكون أكبر من صفر"),
+    .refine((v) => parseFloat(v) >= 0, "السعر لا يمكن أن يكون سالباً"),
   expiryDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "تاريخ الانتهاء مطلوب"),
 });
 

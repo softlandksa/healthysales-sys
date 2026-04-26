@@ -151,16 +151,16 @@ export default function Sidebar({ user }: SidebarProps) {
                     key={href}
                     href={href}
                     className={cn(
-                      "flex items-center gap-3 px-3 py-2 rounded-button text-sm transition-all duration-150 relative group",
+                      "flex items-center gap-3 px-3 py-2.5 rounded-button text-base transition-all duration-150 relative group",
                       active
                         ? "bg-brand-50 text-brand-700 font-semibold border-r-2 border-brand-600"
-                        : "text-text-secondary font-medium hover:bg-surface-1 hover:text-text-primary",
+                        : "text-text-secondary font-semibold hover:bg-surface-1 hover:text-text-primary",
                       collapsed && "justify-center px-2"
                     )}
                     title={collapsed ? label : undefined}
                   >
                     <Icon
-                      size={18}
+                      size={20}
                       className={cn(
                         "shrink-0 transition-colors",
                         active ? "text-brand-600" : "text-text-muted group-hover:text-text-secondary"

@@ -1,115 +1,46 @@
-import { ShoppingCart, MapPin, Wallet, Users, Activity, AlertTriangle } from "lucide-react";
+import { Activity, AlertTriangle } from "lucide-react";
 import NextLink from "next/link";
 import { prisma } from "@/lib/db/prisma";
-import { StatCard } from "@/components/kpi/stat-card";
-import { currentMonthPeriod } from "@/lib/targets/periods";
-import { formatSAR, formatNumber } from "@/lib/utils";
+import { DashboardSummary } from "@/components/dashboard/DashboardSummary";
+import { formatNumber } from "@/lib/utils";
 
 export async function AdminDashboard() {
-  const now   = new Date();
-  const month = currentMonthPeriod(now);
-  const { periodStart, periodEnd } = month;
+  const now = new Date();
 
-  const [salesAgg, prevSalesAgg, collectionsAgg, visitsCount, activeUsers, recentAudit] =
-    await Promise.all([
-      prisma.salesOrder.aggregate({
-        where: { status: "collected", collectedAt: { gte: periodStart, lte: periodEnd } },
-        _sum: { total: true },
-      }),
-      prisma.salesOrder.aggregate({
-        where: {
-          status: "collected",
-          collectedAt: {
-            gte: new Date(periodStart.getTime() - 30 * 24 * 60 * 60 * 1000),
-            lt:  periodStart,
-          },
-        },
-        _sum: { total: true },
-      }),
-      prisma.collection.aggregate({
-        where: { isCancelled: false, collectedAt: { gte: periodStart, lte: periodEnd } },
-        _sum: { amount: true },
-      }),
-      prisma.visit.count({ where: { visitedAt: { gte: periodStart, lte: periodEnd } } }),
-      prisma.user.count({ where: { isActive: true } }),
-      prisma.auditLog.findMany({
-        orderBy: { createdAt: "desc" },
-        take: 10,
-        select: {
-          id: true,
-          action: true,
-          entityType: true,
-          createdAt: true,
-          user: { select: { name: true } },
-        },
-      }),
-    ]);
-
-  const sales      = Number(salesAgg._sum.total ?? 0);
-  const prevSales  = Number(prevSalesAgg._sum.total ?? 0);
-  const colls      = Number(collectionsAgg._sum.amount ?? 0);
-  const salesDelta = prevSales > 0 ? ((sales - prevSales) / prevSales) * 100 : 0;
-
-  // System health counts
-  const now90   = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
-  const [openTasks, activeCompetitions, pendingOrders] = await Promise.all([
+  const [openTasksR, activeCompR, pendingOrdersR, recentAuditR] = await Promise.allSettled([
     prisma.task.count({ where: { status: { in: ["pending", "in_progress", "blocked"] } } }),
     prisma.competition.count({ where: { status: "active" } }),
     prisma.salesOrder.count({ where: { status: { in: ["confirmed", "delivered"] } } }),
-  ]);
+    prisma.auditLog.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 10,
+      select: {
+        id: true, action: true, entityType: true, createdAt: true,
+        user: { select: { name: true } },
+      },
+    }),
+  ] as const);
 
-  // Expiry counts are isolated so a schema mismatch can't crash the dashboard
-  const [nearExpiryResult, expiredResult] = await Promise.allSettled([
+  const openTasks       = openTasksR.status    === "fulfilled" ? openTasksR.value    : 0;
+  const activeComp      = activeCompR.status   === "fulfilled" ? activeCompR.value   : 0;
+  const pendingOrders   = pendingOrdersR.status === "fulfilled" ? pendingOrdersR.value : 0;
+  const recentAudit     = recentAuditR.status  === "fulfilled" ? recentAuditR.value  : [];
+
+  const now90 = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
+  const [nearExpiryR, expiredR] = await Promise.allSettled([
     prisma.salesOrderItem.count({
-      where: {
-        expiryDate: { gt: now, lte: now90 },
-        order: { status: { in: ["delivered", "collected"] } },
-      },
+      where: { expiryDate: { gt: now, lte: now90 }, order: { status: { in: ["delivered", "collected"] } } },
     }),
     prisma.salesOrderItem.count({
-      where: {
-        expiryDate: { lt: now },
-        order: { status: { in: ["delivered", "collected"] } },
-      },
+      where: { expiryDate: { lt: now }, order: { status: { in: ["delivered", "collected"] } } },
     }),
-  ]);
-  const nearExpiryCount = nearExpiryResult.status === "fulfilled" ? nearExpiryResult.value : 0;
-  const expiredCount    = expiredResult.status    === "fulfilled" ? expiredResult.value    : 0;
+  ] as const);
+  const nearExpiry = nearExpiryR.status === "fulfilled" ? nearExpiryR.value : 0;
+  const expired    = expiredR.status    === "fulfilled" ? expiredR.value    : 0;
 
   return (
     <div className="space-y-6">
-      {/* Global KPI row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <StatCard
-          label="إجمالي المبيعات"
-          value={formatSAR(sales)}
-          delta={salesDelta}
-          icon={ShoppingCart}
-          iconColor="text-brand-600"
-          iconBg="bg-brand-50"
-        />
-        <StatCard
-          label="إجمالي التحصيلات"
-          value={formatSAR(colls)}
-          icon={Wallet}
-          iconColor="text-success-600"
-          iconBg="bg-success-50"
-        />
-        <StatCard
-          label="إجمالي الزيارات"
-          value={formatNumber(visitsCount)}
-          icon={MapPin}
-          iconColor="text-warning-600"
-          iconBg="bg-warning-50"
-        />
-        <StatCard
-          label="المستخدمون النشطون"
-          value={formatNumber(activeUsers)}
-          icon={Users}
-          iconColor="text-chart-5"
-          iconBg="bg-purple-50"
-        />
-      </div>
+      <DashboardSummary />
 
       {/* System health */}
       <div className="card p-5 space-y-4">
@@ -120,7 +51,7 @@ export async function AdminDashboard() {
             <p className="text-sm text-text-secondary">مهام مفتوحة</p>
           </div>
           <div className="flex flex-col gap-1">
-            <p className="text-2xl font-bold num text-text-primary">{formatNumber(activeCompetitions)}</p>
+            <p className="text-2xl font-bold num text-text-primary">{formatNumber(activeComp)}</p>
             <p className="text-sm text-text-secondary">منافسات جارية</p>
           </div>
           <div className="flex flex-col gap-1">
@@ -129,19 +60,19 @@ export async function AdminDashboard() {
           </div>
           <NextLink href="/ar/reports/expiry?status=warning" className="flex flex-col gap-1 group">
             <div className="flex items-center gap-1.5">
-              <p className={`text-2xl font-bold num ${nearExpiryCount > 0 ? "text-warning-600" : "text-text-primary"}`}>
-                {formatNumber(nearExpiryCount)}
+              <p className={`text-2xl font-bold num ${nearExpiry > 0 ? "text-warning-600" : "text-text-primary"}`}>
+                {formatNumber(nearExpiry)}
               </p>
-              {nearExpiryCount > 0 && <AlertTriangle size={16} className="text-warning-500" />}
+              {nearExpiry > 0 && <AlertTriangle size={16} className="text-warning-500" />}
             </div>
             <p className="text-sm text-text-secondary group-hover:text-brand-600 transition-colors">قرب الانتهاء</p>
           </NextLink>
           <NextLink href="/ar/reports/expiry?status=expired" className="flex flex-col gap-1 group">
             <div className="flex items-center gap-1.5">
-              <p className={`text-2xl font-bold num ${expiredCount > 0 ? "text-danger-600" : "text-text-primary"}`}>
-                {formatNumber(expiredCount)}
+              <p className={`text-2xl font-bold num ${expired > 0 ? "text-danger-600" : "text-text-primary"}`}>
+                {formatNumber(expired)}
               </p>
-              {expiredCount > 0 && <AlertTriangle size={16} className="text-danger-500" />}
+              {expired > 0 && <AlertTriangle size={16} className="text-danger-500" />}
             </div>
             <p className="text-sm text-text-secondary group-hover:text-brand-600 transition-colors">منتهي الصلاحية</p>
           </NextLink>

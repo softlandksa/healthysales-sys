@@ -263,6 +263,11 @@ export type ReportType =
   | "expiry"
   | "collections"
   | "competitions"
-  | "heatmap";
+  | "heatmap"
+  | "sales"
+  | "visits"
+  | "tasks"
+  | "products"
+  | "targets";
 
 export type ExportFormat = "xlsx" | "csv";

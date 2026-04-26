@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Plus, Trash2, Loader2 } from "lucide-react";
+import { Plus, Trash2, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -45,6 +45,17 @@ function newItem(): OrderItem {
   };
 }
 
+// Validate a single item row; returns error message or null
+function validateRow(it: OrderItem): string | null {
+  if (!it.productId) return "اختر منتجاً";
+  const qty = parseFloat(it.quantity);
+  if (!it.quantity || isNaN(qty) || qty <= 0) return "الكمية يجب أن تكون أكبر من صفر";
+  if (!it.expiryDate) return "تاريخ الانتهاء مطلوب";
+  const price = parseFloat(it.unitPrice || "0");
+  if (isNaN(price) || price < 0) return "السعر لا يمكن أن يكون سالباً";
+  return null;
+}
+
 export function SalesOrderForm({ prefilledCustomerId, prefilledCustomerName, prefilledVisitId }: SalesOrderFormProps) {
   const router = useRouter();
   const [state, action, isPending] = useActionState(createSalesOrder, { success: false } as ActionResult<{ id: string; code: string }>);
@@ -61,6 +72,7 @@ export function SalesOrderForm({ prefilledCustomerId, prefilledCustomerName, pre
   const [productOptionsMap, setProductOptionsMap] = useState<Record<string, ComboboxOption[]>>({});
   const [discount, setDiscount] = useState("0");
   const [confirmImmediately, setConfirmImmediately] = useState(false);
+  const [itemErrors, setItemErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (state.success && state.data) {
@@ -100,19 +112,66 @@ export function SalesOrderForm({ prefilledCustomerId, prefilledCustomerName, pre
         it.key === key ? { ...it, productId, productName: found.label, unit } : it
       )
     );
+    clearRowError(key);
   }
 
   function updateItem(key: string, field: keyof OrderItem, value: string) {
     setItems((prev) => prev.map((it) => (it.key === key ? { ...it, [field]: value } : it)));
+    clearRowError(key);
+  }
+
+  function clearRowError(key: string) {
+    setItemErrors((prev) => {
+      if (!prev[key]) return prev;
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
   }
 
   function removeItem(key: string) {
     setItems((prev) => prev.filter((it) => it.key !== key));
+    clearRowError(key);
   }
 
   function addItem() {
     setItems((prev) => [...prev, newItem()]);
   }
+
+  // Client-side validation before submit
+  function handleFormSubmit(e: React.FormEvent<HTMLFormElement>) {
+    if (!customerId) {
+      e.preventDefault();
+      toast.error("يرجى اختيار العميل أولاً");
+      return;
+    }
+
+    // Only validate rows that have a product selected
+    const filledItems = items.filter((it) => it.productId);
+    if (filledItems.length === 0) {
+      e.preventDefault();
+      toast.error("يجب إضافة منتج واحد على الأقل");
+      return;
+    }
+
+    const errors: Record<string, string> = {};
+    for (const it of filledItems) {
+      const err = validateRow(it);
+      if (err) errors[it.key] = err;
+    }
+
+    if (Object.keys(errors).length > 0) {
+      e.preventDefault();
+      setItemErrors(errors);
+      toast.error("يرجى تصحيح الأخطاء في الصفوف المحددة");
+      return;
+    }
+
+    setItemErrors({});
+  }
+
+  // Only include rows with a selected product in the form submission
+  const submittableItems = items.filter((it) => it.productId);
 
   // Compute totals
   const subtotal = items.reduce((sum, it) => {
@@ -124,16 +183,16 @@ export function SalesOrderForm({ prefilledCustomerId, prefilledCustomerName, pre
   const total = Math.max(0, subtotal - discountNum);
 
   return (
-    <form action={action} className="space-y-6">
+    <form action={action} onSubmit={handleFormSubmit} className="space-y-6">
       {/* Hidden fields */}
       <input type="hidden" name="customerId" value={customerId} />
       {prefilledVisitId && <input type="hidden" name="visitId" value={prefilledVisitId} />}
       <input type="hidden" name="confirmImmediately" value={String(confirmImmediately)} />
-      {items.map((it, i) => (
+      {submittableItems.map((it, i) => (
         <span key={it.key}>
           <input type="hidden" name={`items[${i}].productId`} value={it.productId} />
           <input type="hidden" name={`items[${i}].quantity`} value={it.quantity} />
-          <input type="hidden" name={`items[${i}].unitPrice`} value={it.unitPrice} />
+          <input type="hidden" name={`items[${i}].unitPrice`} value={it.unitPrice || "0"} />
           <input type="hidden" name={`items[${i}].expiryDate`} value={it.expiryDate} />
         </span>
       ))}
@@ -160,19 +219,26 @@ export function SalesOrderForm({ prefilledCustomerId, prefilledCustomerName, pre
           <Label className="text-base font-semibold">المنتجات <span className="text-danger-500">*</span></Label>
           <Button type="button" variant="outline" size="sm" onClick={addItem}>
             <Plus size={14} />
-            إضافة منتج
+            إضافة صف
           </Button>
         </div>
 
         <div className="space-y-3">
           {items.map((item, i) => {
             const expiryDate = item.expiryDate ? new Date(item.expiryDate) : null;
-            const expStatus = expiryDate ? expiryStatus(expiryDate) : null;
-            const expClass = expStatus ? EXPIRY_STATUS_CLASSES[expStatus] : "";
-            const lineTotal = (parseFloat(item.quantity) || 0) * (parseFloat(item.unitPrice) || 0);
+            const expStatus  = expiryDate ? expiryStatus(expiryDate) : null;
+            const expClass   = expStatus ? EXPIRY_STATUS_CLASSES[expStatus] : "";
+            const lineTotal  = (parseFloat(item.quantity) || 0) * (parseFloat(item.unitPrice) || 0);
+            const rowError   = itemErrors[item.key];
 
             return (
-              <div key={item.key} className="card p-4 space-y-3">
+              <div
+                key={item.key}
+                className={cn(
+                  "card p-4 space-y-3",
+                  rowError && "border-danger-400 bg-danger-50/30"
+                )}
+              >
                 <div className="flex items-start justify-between gap-2">
                   <span className="text-xs text-text-muted font-mono mt-1">#{i + 1}</span>
                   {items.length > 1 && (
@@ -188,9 +254,19 @@ export function SalesOrderForm({ prefilledCustomerId, prefilledCustomerName, pre
                   )}
                 </div>
 
+                {/* Row error banner */}
+                {rowError && (
+                  <div className="flex items-center gap-1.5 text-xs text-danger-600">
+                    <AlertCircle size={13} />
+                    {rowError}
+                  </div>
+                )}
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1 sm:col-span-2">
-                    <Label className="text-xs text-text-secondary">المنتج</Label>
+                    <Label className="text-xs text-text-secondary">
+                      المنتج <span className="text-danger-500">*</span>
+                    </Label>
                     <Combobox
                       options={productOptionsMap[item.key] ?? []}
                       value={item.productId}
@@ -204,7 +280,9 @@ export function SalesOrderForm({ prefilledCustomerId, prefilledCustomerName, pre
                   </div>
 
                   <div className="space-y-1">
-                    <Label className="text-xs text-text-secondary">الكمية</Label>
+                    <Label className="text-xs text-text-secondary">
+                      الكمية <span className="text-danger-500">*</span>
+                    </Label>
                     <Input
                       type="number"
                       min="1"
@@ -216,7 +294,9 @@ export function SalesOrderForm({ prefilledCustomerId, prefilledCustomerName, pre
                   </div>
 
                   <div className="space-y-1">
-                    <Label className="text-xs text-text-secondary">السعر</Label>
+                    <Label className="text-xs text-text-secondary">
+                      السعر <span className="text-text-muted text-xs font-normal">(ر.س)</span>
+                    </Label>
                     <Input
                       type="number"
                       min="0"
@@ -247,8 +327,8 @@ export function SalesOrderForm({ prefilledCustomerId, prefilledCustomerName, pre
                 </div>
 
                 {lineTotal > 0 && (
-                  <div className="text-left rtl:text-right">
-                    <span className="text-xs text-text-muted">الإجمالي: </span>
+                  <div className="text-start border-t border-border pt-2">
+                    <span className="text-xs text-text-muted">إجمالي الصف: </span>
                     <span className="text-sm font-semibold num">{formatSAR(lineTotal)}</span>
                   </div>
                 )}
@@ -260,7 +340,7 @@ export function SalesOrderForm({ prefilledCustomerId, prefilledCustomerName, pre
 
       {/* Discount */}
       <div className="space-y-2">
-        <Label className="text-base font-semibold">الخصم</Label>
+        <Label className="text-base font-semibold">الخصم (ر.س)</Label>
         <Input
           type="number"
           min="0"
@@ -291,7 +371,7 @@ export function SalesOrderForm({ prefilledCustomerId, prefilledCustomerName, pre
           </div>
         )}
         <div className="flex justify-between text-base font-bold border-t border-border pt-2">
-          <span>الإجمالي</span>
+          <span>الإجمالي الكلي</span>
           <span className="num">{formatSAR(total)}</span>
         </div>
       </div>
@@ -303,7 +383,7 @@ export function SalesOrderForm({ prefilledCustomerId, prefilledCustomerName, pre
           variant="outline"
           size="lg"
           className="flex-1"
-          disabled={isPending || !customerId || items.every((it) => !it.productId)}
+          disabled={isPending}
           onClick={() => setConfirmImmediately(false)}
         >
           {isPending && !confirmImmediately ? <Loader2 size={16} className="animate-spin" /> : null}
@@ -313,7 +393,7 @@ export function SalesOrderForm({ prefilledCustomerId, prefilledCustomerName, pre
           type="submit"
           size="lg"
           className="flex-1"
-          disabled={isPending || !customerId || items.every((it) => !it.productId)}
+          disabled={isPending}
           onClick={() => setConfirmImmediately(true)}
         >
           {isPending && confirmImmediately ? <Loader2 size={16} className="animate-spin" /> : null}

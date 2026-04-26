@@ -10,8 +10,12 @@ import { buildExpiryReport }        from "@/lib/reports/builders/expiry-report";
 import { buildCollectionsReport }   from "@/lib/reports/builders/collections-report";
 import { buildCompetitionsReport }  from "@/lib/reports/builders/competitions-report";
 import { buildActivityHeatmap }     from "@/lib/reports/builders/activity-heatmap";
-import { PAYMENT_METHOD_LABELS } from "@/types";
-import type { SessionUser } from "@/types";
+import { prisma } from "@/lib/db/prisma";
+import {
+  PAYMENT_METHOD_LABELS, VISIT_TYPE_LABELS, TASK_STATUS_LABELS,
+  TARGET_METRIC_LABELS, TARGET_PERIOD_LABELS,
+} from "@/types";
+import type { SessionUser, VisitType, TaskStatus, TargetMetric } from "@/types";
 
 const BLUE   = "FF2563EB";
 const WHITE  = "FFFFFFFF";
@@ -227,6 +231,161 @@ export async function GET(req: NextRequest) {
         c.endDate.toLocaleDateString("en-SA"),
         c.prize, c.participantCount,
         ...winners,
+      ]);
+      if (i % 2 === 1) r.fill = ALT;
+    });
+
+  } else if (type === "sales") {
+    const repId  = sp.get("repId") ?? (sessionUser.role === "sales_rep" ? sessionUser.id : undefined);
+    const status = sp.get("status") ?? undefined;
+    const orders = await prisma.salesOrder.findMany({
+      where: {
+        ...(repId ? { repId } : {}),
+        createdAt: { gte: from, lte: to },
+        ...(status ? { status: status as "draft" | "confirmed" | "delivered" | "collected" | "cancelled" } : {}),
+      },
+      include: {
+        customer: { select: { nameAr: true, code: true } },
+        rep:      { select: { name: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 2000,
+    });
+    filename     = "sales-report";
+    const sheet  = workbook.addWorksheet("تقرير المبيعات", { views: [{ rightToLeft: true }] });
+    sheet.addRow(["تقرير المبيعات"]).font = { bold: true, size: 14 };
+    sheet.addRow([`الفترة: ${from.toLocaleDateString("en-SA")} إلى ${to.toLocaleDateString("en-SA")}`]);
+    sheet.addRow([]);
+    sheet.addRow(["رقم الطلب", "العميل", "المندوب", "الحالة", "الإجمالي", "التاريخ"]);
+    styleHeader(sheet.lastRow!);
+    orders.forEach((o, i) => {
+      const r = sheet.addRow([
+        o.code,
+        o.customer.nameAr,
+        o.rep?.name ?? "",
+        o.status,
+        Number(o.total),
+        o.createdAt.toLocaleDateString("en-SA"),
+      ]);
+      if (i % 2 === 1) r.fill = ALT;
+    });
+    sheet.getColumn("E").numFmt = SAR_FMT;
+
+  } else if (type === "visits") {
+    const repId      = sp.get("repId") ?? (sessionUser.role === "sales_rep" ? sessionUser.id : undefined);
+    const visitType  = sp.get("visitType") ?? undefined;
+    const visits     = await prisma.visit.findMany({
+      where: {
+        ...(repId ? { repId } : {}),
+        visitedAt: { gte: from, lte: to },
+        ...(visitType ? { visitType: visitType as VisitType } : {}),
+      },
+      include: {
+        customer: { select: { nameAr: true, code: true } },
+        rep:      { select: { name: true } },
+      },
+      orderBy: { visitedAt: "desc" },
+      take: 2000,
+    });
+    filename     = "visits-report";
+    const sheet  = workbook.addWorksheet("تقرير الزيارات", { views: [{ rightToLeft: true }] });
+    sheet.addRow(["تقرير الزيارات"]).font = { bold: true, size: 14 };
+    sheet.addRow([`الفترة: ${from.toLocaleDateString("en-SA")} إلى ${to.toLocaleDateString("en-SA")}`]);
+    sheet.addRow([]);
+    sheet.addRow(["التاريخ", "العميل", "المندوب", "النوع", "ملاحظات"]);
+    styleHeader(sheet.lastRow!);
+    visits.forEach((v, i) => {
+      const r = sheet.addRow([
+        v.visitedAt.toLocaleDateString("en-SA"),
+        v.customer.nameAr,
+        v.rep?.name ?? "",
+        VISIT_TYPE_LABELS[v.visitType as VisitType] ?? v.visitType,
+        v.notes ?? "",
+      ]);
+      if (i % 2 === 1) r.fill = ALT;
+    });
+
+  } else if (type === "tasks") {
+    const assigneeId = sessionUser.role === "sales_rep" ? sessionUser.id : undefined;
+    const statusF    = sp.get("status") ?? undefined;
+    const tasks      = await prisma.task.findMany({
+      where: {
+        ...(assigneeId ? { assignedToId: assigneeId } : {}),
+        createdAt: { gte: from, lte: to },
+        ...(statusF ? { status: statusF as TaskStatus } : {}),
+      },
+      include: {
+        assignedTo: { select: { name: true } },
+        assignedBy: { select: { name: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 2000,
+    });
+    filename     = "tasks-report";
+    const sheet  = workbook.addWorksheet("تقرير المهام", { views: [{ rightToLeft: true }] });
+    sheet.addRow(["تقرير المهام"]).font = { bold: true, size: 14 };
+    sheet.addRow([`الفترة: ${from.toLocaleDateString("en-SA")} إلى ${to.toLocaleDateString("en-SA")}`]);
+    sheet.addRow([]);
+    sheet.addRow(["المهمة", "المسند إليه", "المنشئ", "الحالة", "تاريخ الاستحقاق", "تاريخ الإنشاء"]);
+    styleHeader(sheet.lastRow!);
+    tasks.forEach((t, i) => {
+      const r = sheet.addRow([
+        t.title,
+        t.assignedTo?.name ?? "",
+        t.assignedBy?.name ?? "",
+        TASK_STATUS_LABELS[t.status as TaskStatus] ?? t.status,
+        t.dueDate.toLocaleDateString("en-SA"),
+        t.createdAt.toLocaleDateString("en-SA"),
+      ]);
+      if (i % 2 === 1) r.fill = ALT;
+    });
+
+  } else if (type === "products") {
+    const activeF   = sp.get("active") ?? undefined;
+    const products  = await prisma.product.findMany({
+      where: activeF === "active" ? { isActive: true } : activeF === "inactive" ? { isActive: false } : {},
+      orderBy: { nameAr: "asc" },
+    });
+    filename     = "products-report";
+    const sheet  = workbook.addWorksheet("تقرير المنتجات", { views: [{ rightToLeft: true }] });
+    sheet.addRow(["تقرير المنتجات"]).font = { bold: true, size: 14 };
+    sheet.addRow([]);
+    sheet.addRow(["الكود", "الاسم", "الوحدة", "السعر", "الحالة"]);
+    styleHeader(sheet.lastRow!);
+    products.forEach((p, i) => {
+      const r = sheet.addRow([
+        p.code,
+        p.nameAr,
+        p.unit,
+        Number(p.price) > 0 ? Number(p.price) : "",
+        p.isActive ? "نشط" : "غير نشط",
+      ]);
+      if (i % 2 === 1) r.fill = ALT;
+    });
+    sheet.getColumn("D").numFmt = SAR_FMT;
+
+  } else if (type === "targets") {
+    const userScope  = sessionUser.role === "sales_rep" ? { userId: sessionUser.id } : {};
+    const targets    = await prisma.target.findMany({
+      where: { ...userScope, periodStart: { gte: from, lte: to } },
+      include: { user: { select: { name: true, email: true } } },
+      orderBy: [{ periodStart: "desc" }, { metric: "asc" }],
+    });
+    filename     = "targets-report";
+    const sheet  = workbook.addWorksheet("تقرير الأهداف", { views: [{ rightToLeft: true }] });
+    sheet.addRow(["تقرير الأهداف"]).font = { bold: true, size: 14 };
+    sheet.addRow([`الفترة: ${from.toLocaleDateString("en-SA")} إلى ${to.toLocaleDateString("en-SA")}`]);
+    sheet.addRow([]);
+    sheet.addRow(["المندوب", "المؤشر", "الهدف", "الفترة", "من", "إلى"]);
+    styleHeader(sheet.lastRow!);
+    targets.forEach((t, i) => {
+      const r = sheet.addRow([
+        t.user.name ?? t.user.email,
+        TARGET_METRIC_LABELS[t.metric as TargetMetric] ?? t.metric,
+        Number(t.value),
+        TARGET_PERIOD_LABELS[t.period as keyof typeof TARGET_PERIOD_LABELS] ?? t.period,
+        t.periodStart.toLocaleDateString("en-SA"),
+        t.periodEnd.toLocaleDateString("en-SA"),
       ]);
       if (i % 2 === 1) r.fill = ALT;
     });
