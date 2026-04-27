@@ -1,9 +1,9 @@
-import NextAuth from "next-auth";
+﻿import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import { prisma } from "@/lib/db/prisma";
+import { prisma } from "@/lib/prisma";
 import { edgeAuthConfig } from "./edge-config";
 
 const credentialsSchema = z.object({

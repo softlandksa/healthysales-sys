@@ -1,6 +1,6 @@
-"use server";
+﻿"use server";
 
-import { prismaBase } from "@/lib/db/prisma-base";
+import { prisma } from "@/lib/prisma";
 import { withAuth } from "@/lib/rbac/access";
 import { getAccessibleUserIds } from "@/lib/rbac/access";
 
@@ -45,7 +45,7 @@ export async function getAuditLogs(
 
     const accessibleIds = await getAccessibleUserIds(user);
 
-    const rows = await prismaBase.auditLog.findMany({
+    const rows = await prisma.auditLog.findMany({
       where: {
         ...(filters.from || filters.to
           ? {
@@ -90,7 +90,7 @@ export async function getAuditLogs(
 export async function getAuditEntityTypes(): Promise<string[]> {
   return withAuth("read", "AuditLog", async (user) => {
     if (user.role !== "admin" && user.role !== "general_manager") return [];
-    const rows = await prismaBase.auditLog.groupBy({
+    const rows = await prisma.auditLog.groupBy({
       by: ["entityType"],
       orderBy: { entityType: "asc" },
     });

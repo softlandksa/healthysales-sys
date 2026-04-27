@@ -1,10 +1,10 @@
-"use server";
+﻿"use server";
 
 import { revalidatePath } from "next/cache";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
-import { prisma } from "@/lib/db/prisma";
+import { prisma } from "@/lib/prisma";
 import { withAuth, getAccessibleUserIds } from "@/lib/rbac/access";
 import { audit } from "@/lib/audit/logger";
 import { NotFoundError } from "@/lib/errors";

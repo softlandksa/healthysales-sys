@@ -46,7 +46,9 @@
       "Bash(node -e \"const {isRedirectError} = require\\('./node_modules/next/dist/client/components/redirect-error.js'\\); console.log\\('isRedirectError:', typeof isRedirectError\\)\")",
       "Bash(node -e ' *)",
       "Bash(find src *)",
-      "Bash(ls src/middleware.ts)"
+      "Bash(ls src/middleware.ts)",
+      "Bash(del *)",
+      "Bash(set NODE_OPTIONS=--max-old-space-size=4096)"
     ]
   }
 }

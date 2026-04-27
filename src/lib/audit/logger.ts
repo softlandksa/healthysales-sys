@@ -1,6 +1,6 @@
-import "server-only";
+﻿import "server-only";
 import { headers } from "next/headers";
-import { prisma } from "@/lib/db/prisma";
+import { prisma } from "@/lib/prisma";
 import type { SessionUser } from "@/types";
 import type { Prisma } from "@prisma/client";
 

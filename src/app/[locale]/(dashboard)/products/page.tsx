@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { Plus, AlertTriangle } from "lucide-react";
 import { requireUser } from "@/lib/auth/current-user";
 import { defineAbilitiesFor } from "@/lib/rbac/abilities";
-import { prisma } from "@/lib/db/prisma";
+import { prisma } from "@/lib/prisma";
 import { Breadcrumb } from "@/components/layout/Breadcrumb";
 import { Button } from "@/components/ui/button";
 import { ProductsTable } from "@/components/products/ProductsTable";

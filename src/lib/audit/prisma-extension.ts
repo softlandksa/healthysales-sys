@@ -1,5 +1,4 @@
-import { Prisma } from "@prisma/client";
-import { prismaBase } from "@/lib/db/prisma-base";
+import { PrismaClient, Prisma } from "@prisma/client";
 import { getAuditContext } from "./request-context";
 
 const SKIP_MODELS = new Set([
@@ -28,8 +27,8 @@ function toPlain(v: unknown): Record<string, unknown> | null {
   return redact(v as Record<string, unknown>);
 }
 
-// Map Prisma model name → table accessor on prismaBase
-const MODEL_MAP: Record<string, keyof typeof prismaBase> = {
+// Map Prisma model name → table accessor on the base client
+const MODEL_MAP: Record<string, keyof PrismaClient> = {
   User:                "user",
   Team:                "team",
   Product:             "product",
@@ -46,25 +45,29 @@ const MODEL_MAP: Record<string, keyof typeof prismaBase> = {
   Target:              "target",
 };
 
-export const auditExtension = Prisma.defineExtension((client) =>
-  client.$extends({
+export const auditExtension = Prisma.defineExtension((client) => {
+  // `client` is the base PrismaClient (before this extension).
+  // Using it here avoids a circular import (prisma.ts → extension → prisma.ts).
+  // Reads are never intercepted (WRITE_OPS check), and AuditLog is in SKIP_MODELS,
+  // so these calls cannot recurse.
+  const base = client as unknown as PrismaClient;
+
+  return client.$extends({
     query: {
       $allModels: {
         async $allOperations({ model, operation, args, query }) {
-          // Skip non-write operations and excluded models
           if (!WRITE_OPS.has(operation) || !model || SKIP_MODELS.has(model)) {
             return query(args);
           }
 
           const ctx = getAuditContext();
 
-          // For single-record ops, capture before-state
           let before: Record<string, unknown> | null = null;
           if (ctx && (operation === "update" || operation === "delete" || operation === "upsert")) {
             try {
               const accessor = MODEL_MAP[model];
               if (accessor) {
-                const delegate = (prismaBase as unknown as Record<string, { findUnique?: (a: unknown) => Promise<unknown> }>)[accessor as string];
+                const delegate = (base as unknown as Record<string, { findUnique?: (a: unknown) => Promise<unknown> }>)[accessor as string];
                 const typedArgs = args as { where?: unknown };
                 if (delegate?.findUnique && typedArgs.where) {
                   before = toPlain(await delegate.findUnique({ where: typedArgs.where }));
@@ -75,10 +78,8 @@ export const auditExtension = Prisma.defineExtension((client) =>
             }
           }
 
-          // Execute the actual mutation
           const result = await query(args);
 
-          // Fire-and-forget audit write
           if (ctx) {
             setImmediate(async () => {
               try {
@@ -86,7 +87,7 @@ export const auditExtension = Prisma.defineExtension((client) =>
                 const entityId =
                   (result as Record<string, unknown>)?.id as string | undefined;
 
-                await prismaBase.auditLog.create({
+                await base.auditLog.create({
                   data: {
                     action:     operation,
                     entityType: model,
@@ -106,5 +107,5 @@ export const auditExtension = Prisma.defineExtension((client) =>
         },
       },
     },
-  })
-);
+  });
+});

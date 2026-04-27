@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/db/prisma";
+﻿import { prisma } from "@/lib/prisma";
 import type { SalesOrderStatus } from "@prisma/client";
 import type { SalesReportFilters, SalesReportData } from "../types";
 

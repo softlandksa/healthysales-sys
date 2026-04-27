@@ -1,5 +1,5 @@
-import { Prisma } from "@prisma/client";
-import { prisma } from "@/lib/db/prisma";
+﻿import { Prisma } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { PAYMENT_METHOD_LABELS } from "@/types";
 import type {
   CollectionsReportFilters,

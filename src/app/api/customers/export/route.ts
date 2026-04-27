@@ -1,9 +1,9 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import ExcelJS from "exceljs";
 import { auth } from "@/lib/auth";
 import { defineAbilitiesFor } from "@/lib/rbac/abilities";
 import { getAccessibleUserIds } from "@/lib/rbac/access";
-import { prisma } from "@/lib/db/prisma";
+import { prisma } from "@/lib/prisma";
 import type { SessionUser } from "@/types";
 
 const BLUE  = "FF2563EB";

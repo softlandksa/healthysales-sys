@@ -1,5 +1,5 @@
-import "server-only";
-import { prisma } from "@/lib/db/prisma";
+﻿import "server-only";
+import { prisma } from "@/lib/prisma";
 
 export interface NotifyInput {
   // Accept any transaction-like object (base or extended client tx)

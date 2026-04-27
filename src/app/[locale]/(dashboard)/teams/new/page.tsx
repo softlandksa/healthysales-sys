@@ -3,7 +3,7 @@ import { setRequestLocale } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth/current-user";
 import { defineAbilitiesFor } from "@/lib/rbac/abilities";
-import { prisma } from "@/lib/db/prisma";
+import { prisma } from "@/lib/prisma";
 import { TeamForm } from "@/components/teams/TeamForm";
 import { Breadcrumb } from "@/components/layout/Breadcrumb";
 

@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/db/prisma";
+﻿import { prisma } from "@/lib/prisma";
 import type { ExpiryReportFilters, ExpiryReportData, ExpiryStatus, ExpiryItemRow } from "../types";
 
 function expiryStatus(daysUntilExpiry: number): ExpiryStatus {

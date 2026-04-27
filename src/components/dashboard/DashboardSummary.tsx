@@ -1,6 +1,6 @@
-import { ShoppingCart, Wallet, MapPin, ClipboardList } from "lucide-react";
+﻿import { ShoppingCart, Wallet, MapPin, ClipboardList } from "lucide-react";
 import { Prisma, type SalesOrderStatus } from "@prisma/client";
-import { prisma } from "@/lib/db/prisma";
+import { prisma } from "@/lib/prisma";
 import { currentMonthPeriod } from "@/lib/targets/periods";
 import { formatSAR, formatNumber, cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";

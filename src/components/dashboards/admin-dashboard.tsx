@@ -1,6 +1,6 @@
-import { Activity, AlertTriangle } from "lucide-react";
+﻿import { Activity, AlertTriangle } from "lucide-react";
 import NextLink from "next/link";
-import { prisma } from "@/lib/db/prisma";
+import { prisma } from "@/lib/prisma";
 import { DashboardSummary } from "@/components/dashboard/DashboardSummary";
 import { formatNumber } from "@/lib/utils";
 

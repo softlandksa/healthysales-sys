@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/db/prisma";
+﻿import { prisma } from "@/lib/prisma";
 import { DashboardSummary } from "@/components/dashboard/DashboardSummary";
 import { AttainmentHeatmap } from "@/components/charts/attainment-heatmap";
 import { computeAchievementMetrics } from "@/lib/targets/compute";

@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/db/prisma";
+﻿import { prisma } from "@/lib/prisma";
 import type { VisitType } from "@prisma/client";
 import type { VisitsReportFilters, VisitsReportData } from "../types";
 

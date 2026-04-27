@@ -4,7 +4,7 @@ import { ChevronRight } from "lucide-react";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth/current-user";
 import { getAccessibleUserIds } from "@/lib/rbac/access";
-import { prisma } from "@/lib/db/prisma";
+import { prisma } from "@/lib/prisma";
 import { TargetForm } from "@/components/targets/TargetForm";
 
 export const metadata: Metadata = {

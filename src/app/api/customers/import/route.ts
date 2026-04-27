@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import ExcelJS from "exceljs";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { defineAbilitiesFor } from "@/lib/rbac/abilities";
-import { prisma } from "@/lib/db/prisma";
+import { prisma } from "@/lib/prisma";
 import type { SessionUser } from "@/types";
 
 // ─── Row schema ──────────────────────────────────────────────────────────────

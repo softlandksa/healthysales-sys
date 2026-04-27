@@ -1,5 +1,5 @@
-import { Prisma } from "@prisma/client";
-import { prisma } from "@/lib/db/prisma";
+﻿import { Prisma } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import type { ActivityHeatmapFilters, ActivityHeatmapData, HeatmapCell } from "../types";
 
 const DAY_LABELS = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];

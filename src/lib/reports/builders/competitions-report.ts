@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/db/prisma";
+﻿import { prisma } from "@/lib/prisma";
 import type { CompetitionsReportFilters, CompetitionsReportData } from "../types";
 
 export async function buildCompetitionsReport(

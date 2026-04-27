@@ -1,8 +1,8 @@
-"use server";
+﻿"use server";
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { prisma } from "@/lib/db/prisma";
+import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth/current-user";
 import { defineAbilitiesFor } from "@/lib/rbac/abilities";
 import { audit } from "@/lib/audit/logger";

@@ -1,4 +1,4 @@
-"use server";
+﻿"use server";
 
 /*
  * COLLECTION ACCOUNTING MODEL
@@ -16,7 +16,7 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
-import { prisma } from "@/lib/db/prisma";
+import { prisma } from "@/lib/prisma";
 import { withAuth, getAccessibleUserIds } from "@/lib/rbac/access";
 import { audit } from "@/lib/audit/logger";
 import { ForbiddenError, NotFoundError, ValidationError } from "@/lib/errors";

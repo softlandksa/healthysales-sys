@@ -3,7 +3,7 @@ import { renderToBuffer } from "@react-pdf/renderer";
 import ExcelJS from "exceljs";
 import { auth } from "@/lib/auth";
 import { defineAbilitiesFor } from "@/lib/rbac/abilities";
-import { prisma } from "@/lib/db/prisma";
+import { prisma } from "@/lib/prisma";
 import { StatementDocument } from "@/components/pdf/StatementDocument";
 import type { SessionUser, TransactionType } from "@/types";
 import { TRANSACTION_TYPE_LABELS } from "@/types";

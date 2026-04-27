@@ -1,7 +1,7 @@
-import "server-only";
+﻿import "server-only";
 import { cache } from "react";
 import { headers } from "next/headers";
-import { prisma } from "@/lib/db/prisma";
+import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth/current-user";
 import { defineAbilitiesFor } from "./abilities";
 import { ForbiddenError } from "@/lib/errors";

@@ -1,10 +1,10 @@
-"use server";
+﻿"use server";
 
 import { revalidatePath } from "next/cache";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import { prisma } from "@/lib/db/prisma";
+import { prisma } from "@/lib/prisma";
 import { withAuth } from "@/lib/rbac/access";
 import { getAccessibleUserIds } from "@/lib/rbac/access";
 import { audit } from "@/lib/audit/logger";
@@ -22,7 +22,7 @@ const userRoleEnum = z.enum([
   "sales_rep",
 ]);
 
-export const createUserSchema = z.object({
+const createUserSchema = z.object({
   name: z.string().min(2, "الاسم يجب أن يكون حرفين على الأقل").max(100),
   email: z.string().email("بريد إلكتروني غير صالح"),
   phone: z.string().regex(/^[0-9+\s-]{7,20}$/, "رقم هاتف غير صالح").optional().or(z.literal("")),
@@ -32,7 +32,7 @@ export const createUserSchema = z.object({
   managerId: z.string().cuid().optional().or(z.literal("")),
 });
 
-export const updateUserSchema = z.object({
+const updateUserSchema = z.object({
   name: z.string().min(2).max(100).optional(),
   phone: z.string().regex(/^[0-9+\s-]{7,20}$/).optional().or(z.literal("")),
   role: userRoleEnum.optional(),
@@ -41,7 +41,7 @@ export const updateUserSchema = z.object({
   isActive: z.boolean().optional(),
 });
 
-export const changePasswordSchema = z.object({
+const changePasswordSchema = z.object({
   userId: z.string().cuid(),
   newPassword: z.string().min(6, "كلمة المرور يجب أن تكون 6 أحرف على الأقل"),
 });

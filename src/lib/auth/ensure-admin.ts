@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/db/prisma";
+﻿import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
 const ADMIN_EMAIL    = "kamel@prameg.net";

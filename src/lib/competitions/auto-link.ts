@@ -1,5 +1,5 @@
-import "server-only";
-import { prisma } from "@/lib/db/prisma";
+﻿import "server-only";
+import { prisma } from "@/lib/prisma";
 
 /**
  * AUTO-LINK RULE (locked — do not change without updating scoring docs):

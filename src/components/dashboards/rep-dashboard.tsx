@@ -1,5 +1,5 @@
-import { Trophy } from "lucide-react";
-import { prisma } from "@/lib/db/prisma";
+﻿import { Trophy } from "lucide-react";
+import { prisma } from "@/lib/prisma";
 import { DashboardSummary } from "@/components/dashboard/DashboardSummary";
 import { ProgressCard } from "@/components/kpi/progress-card";
 import { computeAchievementMetrics } from "@/lib/targets/compute";

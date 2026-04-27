@@ -4,7 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth/current-user";
 import { defineAbilitiesFor } from "@/lib/rbac/abilities";
 import { getAccessibleTeamIds } from "@/lib/rbac/access";
-import { prisma } from "@/lib/db/prisma";
+import { prisma } from "@/lib/prisma";
 import { Breadcrumb } from "@/components/layout/Breadcrumb";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { TeamMembersPanel } from "@/components/teams/TeamMembersPanel";

@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/db/prisma";
+﻿import { prisma } from "@/lib/prisma";
 import type { TaskStatus } from "@prisma/client";
 import type { TasksReportFilters, TasksReportData } from "../types";
 

@@ -1,5 +1,5 @@
-import "server-only";
-import { prisma } from "@/lib/db/prisma";
+﻿import "server-only";
+import { prisma } from "@/lib/prisma";
 import { getAccessibleUserIds } from "@/lib/rbac/access";
 import type { SessionUser } from "@/types";
 

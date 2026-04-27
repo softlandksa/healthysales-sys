@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth/current-user";
 import { getAccessibleUserIds } from "@/lib/rbac/access";
-import { prisma } from "@/lib/db/prisma";
+import { prisma } from "@/lib/prisma";
 import { TaskForm } from "@/components/tasks/TaskForm";
 import type { ComboboxOption } from "@/components/ui/combobox";
 

@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/db/prisma";
+﻿import { prisma } from "@/lib/prisma";
 import type { TargetMetric, SalesOrderStatus } from "@prisma/client";
 import type { TargetsReportFilters, TargetsReportData } from "../types";
 

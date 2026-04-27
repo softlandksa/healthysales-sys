@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import ExcelJS from "exceljs";
 import { auth } from "@/lib/auth";
 import { defineAbilitiesFor } from "@/lib/rbac/abilities";
@@ -10,7 +10,7 @@ import { buildExpiryReport }        from "@/lib/reports/builders/expiry-report";
 import { buildCollectionsReport }   from "@/lib/reports/builders/collections-report";
 import { buildCompetitionsReport }  from "@/lib/reports/builders/competitions-report";
 import { buildActivityHeatmap }     from "@/lib/reports/builders/activity-heatmap";
-import { prisma } from "@/lib/db/prisma";
+import { prisma } from "@/lib/prisma";
 import {
   PAYMENT_METHOD_LABELS, VISIT_TYPE_LABELS, TASK_STATUS_LABELS,
   TARGET_METRIC_LABELS, TARGET_PERIOD_LABELS,

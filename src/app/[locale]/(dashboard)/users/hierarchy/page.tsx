@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth/current-user";
 import { defineAbilitiesFor } from "@/lib/rbac/abilities";
 import { getAccessibleUserIds } from "@/lib/rbac/access";
-import { prisma } from "@/lib/db/prisma";
+import { prisma } from "@/lib/prisma";
 import { HierarchyTree } from "@/components/users/HierarchyTree";
 import { Breadcrumb } from "@/components/layout/Breadcrumb";
 import type { HierarchyNode } from "@/components/users/HierarchyTree";

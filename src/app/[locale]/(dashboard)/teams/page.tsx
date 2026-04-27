@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth/current-user";
 import { defineAbilitiesFor } from "@/lib/rbac/abilities";
 import { getAccessibleTeamIds } from "@/lib/rbac/access";
-import { prisma } from "@/lib/db/prisma";
+import { prisma } from "@/lib/prisma";
 import { TeamTable } from "@/components/teams/TeamTable";
 import { Breadcrumb } from "@/components/layout/Breadcrumb";
 import type { TeamRow } from "@/types";

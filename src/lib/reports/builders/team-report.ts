@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/db/prisma";
+﻿import { prisma } from "@/lib/prisma";
 import type { TeamReportFilters, TeamReportData, TeamSummaryRow, RepCompareRow } from "../types";
 
 export async function buildTeamReport(
