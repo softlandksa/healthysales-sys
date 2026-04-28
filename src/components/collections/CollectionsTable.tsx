@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Eye, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { formatSAR } from "@/lib/utils";
 import { PAYMENT_METHOD_LABELS } from "@/types";
 import type { CollectionRow } from "@/types";
@@ -52,11 +52,19 @@ export function CollectionsTable({ rows, total, page, pageSize, from, to, method
         </select>
         <div className="flex items-center gap-2">
           <label className="text-sm text-text-secondary whitespace-nowrap">من:</label>
-          <Input type="date" defaultValue={from} className="w-36" onChange={(e) => updateParam("from", e.target.value)} />
+          <DatePicker
+            value={from}
+            onChange={(v) => updateParam("from", v)}
+            className="w-44"
+          />
         </div>
         <div className="flex items-center gap-2">
           <label className="text-sm text-text-secondary whitespace-nowrap">إلى:</label>
-          <Input type="date" defaultValue={to} className="w-36" onChange={(e) => updateParam("to", e.target.value)} />
+          <DatePicker
+            value={to}
+            onChange={(v) => updateParam("to", v)}
+            className="w-44"
+          />
         </div>
       </div>
 

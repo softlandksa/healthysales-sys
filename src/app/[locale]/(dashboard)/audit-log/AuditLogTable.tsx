@@ -6,6 +6,7 @@ import { ChevronDown, ExternalLink } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ar } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { DatePicker } from "@/components/ui/date-picker";
 import type { AuditLogRow, AuditLogTableFilters } from "@/server/actions/audit";
 
 const ACTION_LABELS: Record<string, string> = {
@@ -136,20 +137,18 @@ export function AuditLogTable({ rows, entityTypes, nextCursor, initialFilters }:
         <div className="flex flex-wrap gap-3 items-end">
           <div className="space-y-1">
             <label className="text-xs text-text-secondary">من</label>
-            <input
-              type="date"
+            <DatePicker
               defaultValue={fromStr}
-              onChange={(e) => applyFilter("from", e.target.value)}
-              className="input text-sm py-1.5"
+              onChange={(v) => applyFilter("from", v)}
+              className="w-44"
             />
           </div>
           <div className="space-y-1">
             <label className="text-xs text-text-secondary">إلى</label>
-            <input
-              type="date"
+            <DatePicker
               defaultValue={toStr}
-              onChange={(e) => applyFilter("to", e.target.value)}
-              className="input text-sm py-1.5"
+              onChange={(v) => applyFilter("to", v)}
+              className="w-44"
             />
           </div>
           <div className="space-y-1">

@@ -78,8 +78,8 @@ export function UserForm({ mode, userId, defaultValues, teams, users, currentUse
         <Separator />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <Label htmlFor="name" required>الاسم الكامل</Label>
-            <Input id="name" name="name" defaultValue={defaultValues?.name ?? ""} placeholder="أحمد محمد العمري" required autoComplete="off" />
+            <Label htmlFor="name">الاسم الكامل</Label>
+            <Input id="name" name="name" defaultValue={defaultValues?.name ?? ""} placeholder="أحمد محمد العمري" autoComplete="off" />
           </div>
 
           <div className="space-y-1.5">

@@ -125,6 +125,9 @@ importers:
       react:
         specifier: ^19.0.0
         version: 19.2.5
+      react-day-picker:
+        specifier: ^8.10.1
+        version: 8.10.1(date-fns@4.1.0)(react@19.2.5)
       react-dom:
         specifier: ^19.0.0
         version: 19.2.5(react@19.2.5)
@@ -8310,6 +8313,11 @@ snapshots:
   react-day-picker@8.10.1(date-fns@3.6.0)(react@19.2.5):
     dependencies:
       date-fns: 3.6.0
+      react: 19.2.5
+
+  react-day-picker@8.10.1(date-fns@4.1.0)(react@19.2.5):
+    dependencies:
+      date-fns: 4.1.0
       react: 19.2.5
 
   react-dom@19.2.5(react@19.2.5):

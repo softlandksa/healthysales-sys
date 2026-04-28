@@ -4,8 +4,8 @@ import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import Link from "next/link";
 import { Eye, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { DatePicker } from "@/components/ui/date-picker";
 import { VISIT_TYPE_LABELS } from "@/types";
 import type { VisitRow } from "@/types";
 import { EmptyState } from "@/components/empty-state";
@@ -47,20 +47,18 @@ export function VisitsTable({ rows, total, page, pageSize, from, to, visitType }
       <div className="card p-4 flex flex-wrap gap-3 items-center">
         <div className="flex items-center gap-2">
           <label className="text-sm text-text-secondary whitespace-nowrap">من:</label>
-          <Input
-            type="date"
-            defaultValue={from}
-            className="w-36"
-            onChange={(e) => updateParam("from", e.target.value)}
+          <DatePicker
+            value={from}
+            onChange={(v) => updateParam("from", v)}
+            className="w-44"
           />
         </div>
         <div className="flex items-center gap-2">
           <label className="text-sm text-text-secondary whitespace-nowrap">إلى:</label>
-          <Input
-            type="date"
-            defaultValue={to}
-            className="w-36"
-            onChange={(e) => updateParam("to", e.target.value)}
+          <DatePicker
+            value={to}
+            onChange={(v) => updateParam("to", v)}
+            className="w-44"
           />
         </div>
         <select

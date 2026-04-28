@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Combobox, type ComboboxOption } from "@/components/ui/combobox";
+import { DatePicker } from "@/components/ui/date-picker";
 import { createTask } from "@/server/actions/tasks";
 import type { ActionResult } from "@/types";
 
@@ -83,13 +84,11 @@ export function TaskForm({ userOptions }: TaskFormProps) {
         <Label htmlFor="dueDate" className="text-sm font-semibold">
           تاريخ الاستحقاق <span className="text-danger-500">*</span>
         </Label>
-        <Input
+        <DatePicker
           id="dueDate"
           name="dueDate"
-          type="date"
           min={todayStr}
-          required
-          className="num max-w-xs"
+          className="max-w-xs"
         />
       </div>
 

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DatePicker } from "@/components/ui/date-picker";
 import { TARGET_METRIC_LABELS, TARGET_PERIOD_LABELS } from "@/types";
 import type { ActionResult, TargetMetric, TargetPeriod } from "@/types";
 
@@ -132,11 +133,11 @@ export function TargetForm({ reps }: TargetFormProps) {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="customStart">تاريخ البداية</Label>
-              <Input id="customStart" name="customStart" type="date" required />
+              <DatePicker id="customStart" name="customStart" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="customEnd">تاريخ النهاية</Label>
-              <Input id="customEnd" name="customEnd" type="date" required />
+              <DatePicker id="customEnd" name="customEnd" />
             </div>
           </div>
         </>

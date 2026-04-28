@@ -23,7 +23,7 @@ const userRoleEnum = z.enum([
 ]);
 
 const createUserSchema = z.object({
-  name: z.string().min(2, "الاسم يجب أن يكون حرفين على الأقل").max(100),
+  name: z.string().min(2, "الاسم يجب أن يكون حرفين على الأقل").max(100).optional().or(z.literal("")),
   email: z.string().email("بريد إلكتروني غير صالح"),
   phone: z.string().regex(/^[0-9+\s-]{7,20}$/, "رقم هاتف غير صالح").optional().or(z.literal("")),
   password: z.string().min(6, "كلمة المرور يجب أن تكون 6 أحرف على الأقل"),
@@ -54,7 +54,7 @@ export async function createUser(
 ): Promise<ActionResult<{ id: string }>> {
   return withAuth("create", "User", async (currentUser) => {
     const raw = {
-      name: formData.get("name"),
+      name: formData.get("name") || undefined,
       email: formData.get("email"),
       phone: formData.get("phone") || undefined,
       password: formData.get("password"),
@@ -80,7 +80,7 @@ export async function createUser(
 
     const user = await prisma.user.create({
       data: {
-        name: data.name,
+        name: data.name || null,
         email: data.email,
         phone: data.phone || null,
         password: hashed,

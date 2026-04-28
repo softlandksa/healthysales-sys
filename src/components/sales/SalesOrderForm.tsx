@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Combobox, type ComboboxOption } from "@/components/ui/combobox";
+import { DatePicker } from "@/components/ui/date-picker";
 import { createSalesOrder } from "@/server/actions/sales";
 import { searchCustomers } from "@/server/actions/customers";
 import { searchProducts } from "@/server/actions/products";
@@ -312,11 +313,9 @@ export function SalesOrderForm({ prefilledCustomerId, prefilledCustomerName, pre
                     <Label className="text-xs text-text-secondary">
                       تاريخ الانتهاء <span className="text-danger-500">*</span>
                     </Label>
-                    <Input
-                      type="date"
+                    <DatePicker
                       value={item.expiryDate}
-                      onChange={(e) => updateItem(item.key, "expiryDate", e.target.value)}
-                      className="num"
+                      onChange={(v) => updateItem(item.key, "expiryDate", v)}
                     />
                     {expiryDate && expStatus && (
                       <span className={cn("inline-block text-xs px-2 py-0.5 rounded-full border", expClass)}>

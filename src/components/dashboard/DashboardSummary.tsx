@@ -1,4 +1,5 @@
-﻿import { ShoppingCart, Wallet, MapPin, ClipboardList } from "lucide-react";
+﻿import { Fragment } from "react";
+import { ShoppingCart, Wallet, MapPin, ClipboardList } from "lucide-react";
 import { Prisma, type SalesOrderStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { currentMonthPeriod } from "@/lib/targets/periods";
@@ -35,32 +36,29 @@ function SectionCard({
   cardStyle: CSSProperties;
 }) {
   return (
-    <div className="card p-5 space-y-5 overflow-hidden" style={cardStyle}>
-      <div className="flex items-center gap-3">
+    <div className="card p-5 overflow-hidden" style={cardStyle}>
+      <div className="flex items-center gap-3 mb-5">
         <div className={cn("p-2.5 rounded-card shrink-0", iconBg)}>
           <Icon size={22} className={iconColor} />
         </div>
         <h3 className="font-bold text-text-primary text-base">{title}</h3>
       </div>
-      <div className="grid grid-cols-3 border-t border-border/60 pt-4">
+      <div className="flex items-center justify-between border-t border-border/60 pt-4">
         {slots.map((s, i) => (
-          <div
-            key={s.label}
-            className={cn(
-              "flex flex-col gap-2 px-3",
-              i === 0 && "pr-0",
-              i === 2 && "pl-0",
-              i > 0 && "border-r border-border/60"
+          <Fragment key={s.label}>
+            {i > 0 && (
+              <div className="w-px h-12 bg-gray-300 shrink-0" />
             )}
-          >
-            <span className={cn(
-              "inline-flex w-fit text-xs font-semibold px-2 py-0.5 rounded-full leading-tight",
-              s.badge
-            )}>
-              {s.label}
-            </span>
-            <p className="text-[1.375rem] font-bold num text-text-primary leading-tight">{s.value}</p>
-          </div>
+            <div className="flex-1 flex flex-col items-center px-6 py-2 rounded-xl hover:bg-gray-50 transition-all duration-200 cursor-default">
+              <span className={cn(
+                "text-xs font-semibold px-2.5 py-1 rounded-full leading-tight",
+                s.badge
+              )}>
+                {s.label}
+              </span>
+              <p className="text-lg font-bold num text-text-primary mt-2 leading-tight">{s.value}</p>
+            </div>
+          </Fragment>
         ))}
       </div>
     </div>
@@ -122,9 +120,9 @@ export async function DashboardSummary({ repIdFilter, taskAssigneeFilter }: Dash
         title="المبيعات"
         cardStyle={{ background: "#eff6ff" }}
         slots={[
-          { label: "اليوم",     value: formatSAR(agg(sTodayR)), badge: "bg-blue-100 text-blue-700"   },
-          { label: "أمس",       value: formatSAR(agg(sYestR)),  badge: "bg-neutral-100 text-neutral-600" },
-          { label: "هذا الشهر", value: formatSAR(agg(sMonthR)), badge: "bg-slate-50 text-slate-400 border border-slate-200" },
+          { label: "اليوم",     value: formatSAR(agg(sTodayR)), badge: "bg-blue-500 text-white"      },
+          { label: "أمس",       value: formatSAR(agg(sYestR)),  badge: "bg-gray-200 text-gray-700"   },
+          { label: "هذا الشهر", value: formatSAR(agg(sMonthR)), badge: "bg-gray-100 text-gray-500"   },
         ]}
       />
       <SectionCard
@@ -134,9 +132,9 @@ export async function DashboardSummary({ repIdFilter, taskAssigneeFilter }: Dash
         title="التحصيلات"
         cardStyle={{ background: "#f0fdf4" }}
         slots={[
-          { label: "اليوم",     value: formatSAR(aggA(cTodayR)), badge: "bg-emerald-100 text-emerald-700"   },
-          { label: "أمس",       value: formatSAR(aggA(cYestR)),  badge: "bg-neutral-100 text-neutral-600" },
-          { label: "هذا الشهر", value: formatSAR(aggA(cMonthR)), badge: "bg-slate-50 text-slate-400 border border-slate-200" },
+          { label: "اليوم",     value: formatSAR(aggA(cTodayR)), badge: "bg-blue-500 text-white"      },
+          { label: "أمس",       value: formatSAR(aggA(cYestR)),  badge: "bg-gray-200 text-gray-700"   },
+          { label: "هذا الشهر", value: formatSAR(aggA(cMonthR)), badge: "bg-gray-100 text-gray-500"   },
         ]}
       />
       <SectionCard
@@ -146,9 +144,9 @@ export async function DashboardSummary({ repIdFilter, taskAssigneeFilter }: Dash
         title="الزيارات"
         cardStyle={{ background: "#fffbeb" }}
         slots={[
-          { label: "اليوم",     value: formatNumber(cnt(vTodayR)), badge: "bg-amber-100 text-amber-700"   },
-          { label: "أمس",       value: formatNumber(cnt(vYestR)),  badge: "bg-neutral-100 text-neutral-600" },
-          { label: "هذا الشهر", value: formatNumber(cnt(vMonthR)), badge: "bg-slate-50 text-slate-400 border border-slate-200" },
+          { label: "اليوم",     value: formatNumber(cnt(vTodayR)), badge: "bg-blue-500 text-white"    },
+          { label: "أمس",       value: formatNumber(cnt(vYestR)),  badge: "bg-gray-200 text-gray-700" },
+          { label: "هذا الشهر", value: formatNumber(cnt(vMonthR)), badge: "bg-gray-100 text-gray-500" },
         ]}
       />
       <SectionCard

@@ -4,8 +4,8 @@ import { Suspense } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useCallback } from "react";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Search } from "lucide-react";
 import type { ReactNode } from "react";
 
@@ -40,11 +40,11 @@ function DateRangeFilterInner({ extraFilters }: DateRangeFilterProps) {
       <div className="flex items-end gap-3">
         <div className="space-y-1.5">
           <Label htmlFor="from" className="text-xs">من</Label>
-          <Input id="from" name="from" type="date" defaultValue={from} className="h-8 text-sm w-36" />
+          <DatePicker id="from" name="from" defaultValue={from} className="w-44" />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="to" className="text-xs">إلى</Label>
-          <Input id="to" name="to" type="date" defaultValue={to} className="h-8 text-sm w-36" />
+          <DatePicker id="to" name="to" defaultValue={to} className="w-44" />
         </div>
       </div>
 
